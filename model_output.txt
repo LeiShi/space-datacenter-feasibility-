@@ -1,0 +1,80 @@
+
+== 1. Orbit (dawn-dusk SSO, 650 km) ==
+    500 km: mean eclipse 5.4% of time, longest 22.6 min, eclipse season 103 d/yr
+    650 km: mean eclipse 3.9% of time, longest 19.7 min, eclipse season 87 d/yr
+    800 km: mean eclipse 2.7% of time, longest 16.8 min, eclipse season 73 d/yr
+   1000 km: mean eclipse 1.5% of time, longest 13.0 min, eclipse season 55 d/yr
+   1200 km: mean eclipse 0.6% of time, longest 8.5 min, eclipse season 35 d/yr
+  radiator radial: IR view factor per face [0.    0.808], albedo factor [0.    0.077]
+  radiator along : IR view factor per face [0.241 0.241], albedo factor [0.022 0.022]
+
+== 2. Power & thermal fundamentals ==
+  array electrical output: 235 W/m^2 BOL, 207 W/m^2 EOL; array runs at 47 C
+  radiator net flux at 320 K: radial 740 W/m^2, along-track 800 W/m^2 (two-sided panel)
+  effective sink temperature: radial 205 K, along 180 K
+  drag dv (m/s/yr) with radiator facing ram, A/m=0.052 m^2/kg (mean / solar max): {500: (73.3, 366.4), 550: (33.2, 166.2), 650: (7.5, 37.3), 800: (1.2, 5.9), 1000: (0.3, 1.5)}
+
+== 3. Mass budget per kW of IT ==
+  [today] total 50.2 kg/kW  (array 13.6, radiator 17.4, IT 10.0, battery 0.61, shield 2.0, struct 6.6)  | array 5.80 m^2/kW, radiator 1.74 m^2/kW (685 W/m^2)
+  [near_term] total 30.4 kg/kW  (array 8.9, radiator 9.5, IT 6.0, battery 0.49, shield 1.5, struct 4.0)  | array 5.69 m^2/kW, radiator 1.59 m^2/kW (740 W/m^2)
+  [optimistic] total 18.3 kg/kW  (array 5.1, radiator 5.4, IT 4.5, battery 0.36, shield 1.0, struct 2.0)  | array 5.44 m^2/kW, radiator 1.35 m^2/kW (856 W/m^2)
+  [advocate] total 9.3 kg/kW  (array 2.5, radiator 2.3, IT 3.0, battery 0.30, shield 0.5, struct 0.7)  | array 4.82 m^2/kW, radiator 1.16 m^2/kW (984 W/m^2)
+
+== 6. Economics: cost per delivered IT-kW-year ==
+  [today] space $91,550 vs ground $11,565  ratio 7.92  | break-even launch: none  | break-even ground elec $7.68/kWh  | ratio if launch & bus free: 1.02
+      power+cooling+housing per IT-kWh: space $9.240 vs ground $0.453;  per GPU-hour (1.8 kW all-in): space $18.80 vs ground $2.37
+      space parts: {'IT': '10,555', 'spacecraft': '24,922', 'launch': '46,102', 'opex': '6,770', 'financing': '3,200'}
+      ground parts: {'IT': '7,590', 'facility': '1,770', 'energy': '842', 'opex': '1,364'}
+  [near_term] space $23,551 vs ground $11,565  ratio 2.04  | break-even launch: none  | break-even ground elec $1.22/kWh  | ratio if launch & bus free: 0.94
+      power+cooling+housing per IT-kWh: space $1.578 vs ground $0.453;  per GPU-hour (1.8 kW all-in): space $4.84 vs ground $2.37
+      space parts: {'IT': '9,722', 'spacecraft': '5,894', 'launch': '5,370', 'opex': '1,742', 'financing': '823'}
+      ground parts: {'IT': '7,590', 'facility': '1,770', 'energy': '842', 'opex': '1,364'}
+  [optimistic] space $13,299 vs ground $11,565  ratio 1.15  | break-even launch: none  | break-even ground elec $0.24/kWh  | ratio if launch & bus free: 0.88
+      power+cooling+housing per IT-kWh: space $0.478 vs ground $0.453;  per GPU-hour (1.8 kW all-in): space $2.73 vs ground $2.37
+      space parts: {'IT': '9,106', 'spacecraft': '1,685', 'launch': '1,059', 'opex': '983', 'financing': '465'}
+      ground parts: {'IT': '7,590', 'facility': '1,770', 'energy': '842', 'opex': '1,364'}
+  [advocate] space $9,659 vs ground $11,565  ratio 0.84  | break-even launch: $720/kg  | break-even ground elec $-0.10/kWh  | ratio if launch & bus free: 0.80
+      power+cooling+housing per IT-kWh: space $0.131 vs ground $0.453;  per GPU-hour (1.8 kW all-in): space $1.98 vs ground $2.37
+      space parts: {'IT': '8,511', 'spacecraft': '296', 'launch': '132', 'opex': '371', 'financing': '351'}
+      ground parts: {'IT': '7,590', 'facility': '1,770', 'energy': '842', 'opex': '1,364'}
+  ground cost shares: {'IT': '66%', 'facility': '15%', 'energy': '7%', 'opex': '12%'}
+
+== 2b. Heat pump: optimum hot-side temperature (50% of Carnot, 3 kg/kW pump) ==
+  radiator  3 kg/m^2: T_opt 320 K, mass 24.9 vs 24.9 kg/kW without
+  radiator  6 kg/m^2: T_opt 328 K, mass 30.4 vs 30.4 kg/kW without
+  radiator 10 kg/m^2: T_opt 372 K, mass 36.1 vs 37.7 kg/kW without
+  radiator 15 kg/m^2: T_opt 414 K, mass 41.3 vs 46.8 kg/kW without
+
+== 4. Radiation & reliability ==
+   500 km,  3 mm Al:     607 rad/yr | SDC   35.7/chip-yr | HBM UECC   13.8 | SEFI 0.121 | HBM onset in   3.3 yr | interrupt x81 (UECC=crash) / x1.7
+   500 km, 10 mm Al:      43 rad/yr | SDC    2.5/chip-yr | HBM UECC    1.0 | SEFI 0.009 | HBM onset in  46.3 yr | interrupt x7 (UECC=crash) / x1.0
+   650 km,  3 mm Al:     770 rad/yr | SDC   45.3/chip-yr | HBM UECC   17.5 | SEFI 0.154 | HBM onset in   2.6 yr | interrupt x103 (UECC=crash) / x1.9
+   650 km, 10 mm Al:     150 rad/yr | SDC    8.8/chip-yr | HBM UECC    3.4 | SEFI 0.030 | HBM onset in  13.3 yr | interrupt x21 (UECC=crash) / x1.2
+   800 km,  3 mm Al:    1340 rad/yr | SDC   78.8/chip-yr | HBM UECC   30.4 | SEFI 0.268 | HBM onset in   1.5 yr | interrupt x179 (UECC=crash) / x2.5
+   800 km, 10 mm Al:     524 rad/yr | SDC   30.8/chip-yr | HBM UECC   11.9 | SEFI 0.105 | HBM onset in   3.8 yr | interrupt x70 (UECC=crash) / x1.6
+  1000 km,  3 mm Al:    4766 rad/yr | SDC  280.4/chip-yr | HBM UECC  108.3 | SEFI 0.953 | HBM onset in   0.4 yr | interrupt x633 (UECC=crash) / x6.5
+  1000 km, 10 mm Al:    2772 rad/yr | SDC  163.1/chip-yr | HBM UECC   63.0 | SEFI 0.554 | HBM onset in   0.7 yr | interrupt x368 (UECC=crash) / x4.2
+  16k-chip cluster @650 km/10 mm: one SDC every 3.6 min, one HBM UECC every 9.4 min
+  16k-GPU job, interrupts x1.0: system MTBF 3.09 h, checkpoint every 14 min, goodput 0.900
+  16k-GPU job, interrupts x1.2: system MTBF 2.64 h, checkpoint every 13 min, goodput 0.889
+  16k-GPU job, interrupts x3.0: system MTBF 1.03 h, checkpoint every 8 min, goodput 0.792
+  16k-GPU job, interrupts x10.0: system MTBF 0.31 h, checkpoint every 4 min, goodput 0.498
+  16k-GPU job, interrupts x20.9: system MTBF 0.15 h, checkpoint every 3 min, goodput 0.101
+  mean surviving capacity over 3/5/7 yr without repair: {'0.02': [0.97, 0.951, 0.933], '0.05': [0.927, 0.882, 0.84], '0.10': [0.857, 0.777, 0.707], '0.20': [0.729, 0.603, 0.506]}
+
+== 5. Communications ==
+  text inference to ground: 1.33 Gbps per MW (incl. 10x overhead) -> 1 GW = 1.33 Tbps
+  data-parallel all-reduce, 1T params, 10 s step: 3.2 Tbps per cut
+  10-cm to 10-cm optical link captured fraction: {'200': '1.0e+00', '1000': '1.0e+00', '10000': '2.6e-01', '100000': '2.6e-03', '1000000': '2.6e-05', '5000000': '1.0e-06'}
+
+== 8. Scale ==
+  [today] 1 GW = 50,229 t = 502 launches of 100 t, 7.5 km^2 of array+radiator; 100 GW = 50,229 launches
+  [near_term] 1 GW = 30,383 t = 304 launches of 100 t, 7.3 km^2 of array+radiator; 100 GW = 30,383 launches
+  [optimistic] 1 GW = 18,321 t = 183 launches of 100 t, 6.8 km^2 of array+radiator; 100 GW = 18,321 launches
+  [advocate] 1 GW = 9,278 t = 93 launches of 100 t, 6.0 km^2 of array+radiator; 100 GW = 9,278 launches
+
+== 7. Monte Carlo (n=20000) ==
+  space/ground cost ratio percentiles: {'p5': 1.37, 'p25': 1.81, 'p50': 2.38, 'p75': 3.17, 'p95': 4.65}
+  P(space cheaper) = 0.000;  given launch<$300/kg: 0.000;  given launch<$150/kg: 0.000
+  Spearman rank correlation with ratio: {'launch_usd_per_kg': 0.64, 'sc_usd_per_kg': 0.54, 'rad_kg_per_m2': 0.25, 'space_afr_multiplier': 0.18, 'hw_afr_ground': 0.16, 'array_W_per_kg': -0.16, 'fac_capex_usd_per_kW': -0.16, 'it_capex_usd_per_kW': -0.12, 'T_rad': -0.12, 'elec_usd_per_kWh': -0.07, 'it_kg_per_kW': 0.06, 'discount_rate': 0.01, 'lifetime_yr': -0.0}
+findfont: Failed to find font weight semibold for DejaVu Sans, now using 700.

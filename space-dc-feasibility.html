@@ -1,0 +1,849 @@
+<title>Orbital Data Center Feasibility</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a mission dossier. One reading column with a sticky section index on wide screens,
+   a full-width calculator band, and charts drawn to scale inside the column. */
+:root{
+  --paper:#f3f5f6; --surface:#fcfcfb; --ink:#0f1a24; --ink-2:#47535f; --muted:#6f7b87; --rule:#d9dee2; --wash:#e9edf0;
+  --accent:#a86400; --accent-soft:#f6e6c8; --link:#1f5fbf;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7;
+  --q1:#86b6ef; --q2:#3987e5; --q3:#256abf; --q4:#104281;
+  --good:#0ca30c; --warn:#fab219; --serious:#ec835a; --critical:#d03b3b; --good-ink:#006300;
+  --grid:#e1e0d9; --axis:#c3c2b7;
+  --earth-day:#3f7fd0; --earth-night:#0b1726; --space:#0d1520;
+  --f-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --f-data:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --step--1:0.84rem; --step-0:1.02rem; --step-1:1.22rem; --step-2:1.6rem; --step-3:2.2rem; --step-4:3.1rem;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0b1117; --surface:#131b23; --ink:#e7edf2; --ink-2:#aeb9c3; --muted:#83909c; --rule:#26323d; --wash:#1a242e;
+  --accent:#f0a531; --accent-soft:#3a2a10; --link:#7fb2ff;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+  --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#86b6ef;
+  --good-ink:#0ca30c; --grid:#2c2c2a; --axis:#383835; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0b1117; --surface:#131b23; --ink:#e7edf2; --ink-2:#aeb9c3; --muted:#83909c; --rule:#26323d; --wash:#1a242e;
+  --accent:#f0a531; --accent-soft:#3a2a10; --link:#7fb2ff;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9;
+  --q1:#184f95; --q2:#256abf; --q3:#3987e5; --q4:#86b6ef;
+  --good-ink:#0ca30c; --grid:#2c2c2a; --axis:#383835; color-scheme:dark}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:var(--step-0);line-height:1.6;
+  padding-inline:16px;padding-block:0 48px}
+a{color:var(--link);text-underline-offset:2px}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.12;margin:0}
+h2{font-size:var(--step-3);font-variation-settings:"wdth" 112;font-weight:700;letter-spacing:-0.01em}
+h3{font-size:var(--step-1);font-weight:650;font-variation-settings:"wdth" 100}
+p{margin:0}
+.eyebrow{font-family:var(--f-data);font-size:var(--step--1);letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)}
+.num{font-family:var(--f-data);font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin-inline:auto}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:32px;align-items:center;padding-block:40px 28px}
+.hero h1{font-size:clamp(2.2rem,5.4vw,4.1rem);font-variation-settings:"wdth" 118;font-weight:800;letter-spacing:-0.02em}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .lede{font-size:var(--step-1);color:var(--ink-2);margin-top:18px;max-width:34em}
+.hero .verdict{margin-top:22px;display:grid;gap:10px;max-width:36em}
+.verdict-line{display:grid;grid-template-columns:7.2em minmax(0,1fr);gap:12px;align-items:baseline;border-top:1px solid var(--rule);padding-top:10px}
+.verdict-line b{font-family:var(--f-display);font-variation-settings:"wdth" 90;font-size:var(--step--1);text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)}
+.orbit-fig{background:var(--space);border-radius:6px;max-width:100%;overflow:hidden}
+.orbit-fig canvas{width:100%;aspect-ratio:1/0.74;max-width:100%;display:block}
+.orbit-fig figcaption{padding:0 14px 12px;font-family:var(--f-data);font-size:0.72rem;color:#9fb3c6;line-height:1.4}
+
+/* stat strip */
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;border-block:1px solid var(--rule);margin-block:8px 36px}
+.stat{padding:14px 14px 16px;border-left:1px solid var(--rule)}
+.stat:first-child{border-left:0}
+.stat .v{font-family:var(--f-display);font-weight:750;font-size:var(--step-2);font-variation-settings:"wdth" 105;line-height:1.1}
+.stat .l{font-size:var(--step--1);color:var(--ink-2);margin-top:4px;line-height:1.35}
+
+/* body grid with index */
+.layout{display:grid;grid-template-columns:200px minmax(0,1fr);gap:40px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;font-family:var(--f-display);font-size:0.86rem;font-variation-settings:"wdth" 92}
+.toc ol{list-style:none;margin:0;padding:0;display:grid;gap:2px;counter-reset:s}
+.toc a{display:grid;grid-template-columns:1.8em 1fr;color:var(--ink-2);text-decoration:none;padding:5px 6px;border-radius:4px}
+.toc a:hover{background:var(--wash);color:var(--ink)}
+.toc a span{color:var(--muted);font-family:var(--f-data);font-size:0.75rem;padding-top:2px}
+main{min-width:0}
+section{padding-block:34px;border-top:1px solid var(--rule)}
+section > header{display:grid;gap:6px;margin-bottom:18px}
+.prose{max-width:68ch;display:grid;gap:14px}
+.prose ul{margin:0;padding-left:1.2em;display:grid;gap:6px}
+.note{font-size:var(--step--1);color:var(--muted)}
+.eq{font-family:var(--f-data);font-size:0.9rem;background:var(--wash);padding:12px 14px;border-radius:4px;overflow-x:auto;white-space:nowrap;max-width:68ch}
+.eq i{font-family:var(--f-body);font-size:1.05em}
+
+/* tables */
+.tbl{overflow-x:auto;margin-block:6px;max-width:100%}
+table{border-collapse:collapse;font-size:0.92rem;min-width:100%}
+th,td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-family:var(--f-display);font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);font-variation-settings:"wdth" 92}
+td.n,th.n{text-align:right;font-family:var(--f-data);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.hl td{background:var(--accent-soft)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-display);font-size:0.78rem;font-weight:650;letter-spacing:0.03em;white-space:nowrap}
+.chip::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--c)}
+.chip.good{--c:var(--good)} .chip.warn{--c:var(--warn)} .chip.serious{--c:var(--serious)} .chip.crit{--c:var(--critical)}
+
+/* charts */
+.chart{margin-block:10px 4px;min-width:0}
+.chart-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;align-items:baseline}
+.chart-title{font-family:var(--f-display);font-weight:650;font-size:1rem}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:0.82rem;color:var(--ink-2);font-family:var(--f-display);font-variation-settings:"wdth" 92}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;background:var(--c);display:inline-block}
+.legend i.sq{height:10px;width:10px;border-radius:2px}
+.plot{position:relative;width:100%}
+.plot svg{display:block;width:100%;overflow:visible}
+.plot text{font-family:var(--f-data);font-size:11px;fill:var(--muted)}
+.plot .lab{fill:var(--ink-2)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:7px 9px;font-family:var(--f-data);
+  font-size:0.76rem;line-height:1.45;color:var(--ink);box-shadow:0 4px 14px rgba(0,0,0,0.12);white-space:nowrap;z-index:5}
+.tip b{font-weight:600}
+.tip .k{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:var(--c)}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+
+/* calculator */
+.calc{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:22px;display:grid;gap:18px;margin-top:6px}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{font-family:var(--f-display);font-size:0.86rem;font-weight:600;border:1px solid var(--rule);background:var(--paper);color:var(--ink);padding:7px 12px;border-radius:999px;cursor:pointer}
+.presets button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.calc-grid{display:grid;grid-template-columns:minmax(0,0.95fr) minmax(0,1.05fr);gap:28px}
+.ctrls{display:grid;gap:12px}
+.ctrl{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center}
+.ctrl label{font-size:0.88rem;color:var(--ink-2);font-family:var(--f-display);font-variation-settings:"wdth" 95}
+.ctrl output{font-family:var(--f-data);font-size:0.86rem;font-variant-numeric:tabular-nums;color:var(--ink)}
+.ctrl input{grid-column:1/-1;width:100%;accent-color:var(--s1)}
+.ctrl-group{font-family:var(--f-data);font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.out{display:grid;gap:16px;align-content:start}
+.big{display:grid;gap:4px}
+.big .v{font-family:var(--f-display);font-size:clamp(2.6rem,6vw,3.6rem);font-weight:800;font-variation-settings:"wdth" 110;line-height:1}
+.big .l{color:var(--ink-2);font-size:0.95rem}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.kv div{border-top:1px solid var(--rule);padding-top:6px}
+.kv .k{font-size:0.8rem;color:var(--muted);font-family:var(--f-display);font-variation-settings:"wdth" 92}
+.kv .v{font-family:var(--f-data);font-size:1rem;font-variant-numeric:tabular-nums}
+.barrow{display:grid;grid-template-columns:5.6em minmax(0,1fr);gap:10px;align-items:center;font-size:0.84rem}
+.bar{display:flex;height:22px;gap:2px;position:relative}
+.bar div{height:100%;background:var(--c);min-width:0}
+.bar div:last-child{border-radius:0 4px 4px 0}
+.bartot{font-family:var(--f-data);font-size:0.8rem;color:var(--ink-2);margin-left:6px;white-space:nowrap}
+
+.signposts{counter-reset:sp;list-style:none;padding:0;margin:0;display:grid;gap:10px;max-width:68ch}
+.signposts li{display:grid;grid-template-columns:2em minmax(0,1fr);gap:8px}
+.signposts li::before{counter-increment:sp;content:counter(sp);font-family:var(--f-data);color:var(--accent);font-weight:600}
+.src{font-size:0.86rem;columns:2;column-gap:32px}
+.src p{break-inside:avoid;margin-bottom:8px}
+footer{margin-top:24px;font-size:var(--step--1);color:var(--muted)}
+
+@media (max-width: 980px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .toc{display:none}
+  .calc-grid,.two{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width: 760px){
+  .hero{grid-template-columns:minmax(0,1fr);padding-block:24px 12px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat:nth-child(odd){border-left:0}
+  .stat{border-top:1px solid var(--rule)}
+  .stat:last-child{grid-column:1/-1}
+  .src{columns:1}
+  .calc{padding:16px}
+  h2{font-size:var(--step-2)}
+}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">First-principles assessment · October 2026</p>
+      <h1>Can AI data centers move to <em>orbit</em>?</h1>
+      <p class="lede">Physically, yes. Economically, not on any credible timeline. A model with one kilowatt of compute as the unit shows why: the sunlight is free, but the chips are two thirds of the bill, and orbit cannot make them cheaper.</p>
+      <div class="verdict">
+        <div class="verdict-line"><b>Physics</b><span>Feasible. 96% sunlight at 650 km and a radiator only 28% the size of the solar array.</span></div>
+        <div class="verdict-line"><b>Reliability</b><span>Inference is fine. Large synchronous training breaks without new fault-tolerant software.</span></div>
+        <div class="verdict-line"><b>Economics</b><span>About 2× the ground cost around 2030. Parity needs $200/kg launch <em>and</em> satellites 2–5× cheaper per kg than Starlink.</span></div>
+      </div>
+    </div>
+    <figure class="orbit-fig" style="margin:0">
+      <canvas id="orbit" aria-label="Animated view of a dawn-dusk sun-synchronous orbit riding Earth's day-night terminator"></canvas>
+      <figcaption>Dawn–dusk sun-synchronous orbit, 650 km (altitude exaggerated). The orbit plane follows the terminator, so the satellite stays sunlit except for short eclipses around one solstice.</figcaption>
+    </figure>
+  </header>
+
+  <div class="stats" role="list">
+    <div class="stat" role="listitem"><div class="v num">96%</div><div class="l">of the year in sunlight at 650 km dawn–dusk</div></div>
+    <div class="stat" role="listitem"><div class="v num">740 W/m²</div><div class="l">net radiator rejection at 320 K after Earth's infrared load</div></div>
+    <div class="stat" role="listitem"><div class="v num">30 kg/kW</div><div class="l">specific mass of a 2030-credible design</div></div>
+    <div class="stat" role="listitem"><div class="v num">3.6 min</div><div class="l">between silent data corruptions on a 16k-chip cluster</div></div>
+    <div class="stat" role="listitem"><div class="v num">2.0×</div><div class="l">orbit vs ground cost per delivered kW-year, ~2030</div></div>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Sections">
+      <ol>
+        <li><a href="#calc"><span>01</span>Calculator</a></li>
+        <li><a href="#claims"><span>02</span>Claims vs flown</a></li>
+        <li><a href="#model"><span>03</span>The model</a></li>
+        <li><a href="#power"><span>04</span>Power</a></li>
+        <li><a href="#cooling"><span>05</span>Cooling</a></li>
+        <li><a href="#radiation"><span>06</span>Radiation &amp; errors</a></li>
+        <li><a href="#materials"><span>07</span>Materials &amp; debris</a></li>
+        <li><a href="#comms"><span>08</span>Communications</a></li>
+        <li><a href="#economics"><span>09</span>Economics</a></li>
+        <li><a href="#scale"><span>10</span>Scale</a></li>
+        <li><a href="#open"><span>11</span>Open possibilities</a></li>
+        <li><a href="#verdict"><span>12</span>Verdict</a></li>
+        <li><a href="#sources"><span>13</span>Sources</a></li>
+      </ol>
+    </nav>
+    <main>
+
+<section id="calc" style="border-top:0;padding-top:0">
+  <header><p class="eyebrow">01 · Try it</p><h2>Cost of a kilowatt-year of compute, in orbit vs on the ground</h2></header>
+  <div class="prose"><p>This runs the same equations as the Python model. Pick a scenario, then move any input. Everything is per kilowatt of IT power, and costs are levelised per <em>delivered</em> kW-year, so eclipse throttling and unrepaired failures count against orbit.</p></div>
+  <div class="calc">
+    <div class="presets" role="group" aria-label="Scenario presets">
+      <button type="button" data-preset="today">Today (2026 parts &amp; prices)</button>
+      <button type="button" data-preset="near_term" aria-pressed="true">Near term (~2030)</button>
+      <button type="button" data-preset="optimistic">Optimistic (~2035)</button>
+      <button type="button" data-preset="advocate">Advocate assumptions</button>
+    </div>
+    <div class="calc-grid">
+      <div class="ctrls" id="ctrls"></div>
+      <div class="out">
+        <div class="big"><div class="v num" id="o-ratio">2.04×</div><div class="l" id="o-ratio-l">Orbit costs this multiple of the ground per delivered kW-year</div><div id="o-chip"></div></div>
+        <div class="kv">
+          <div><div class="k">Per GPU-hour, orbit vs ground</div><div class="v" id="o-gpuhr">–</div></div>
+          <div><div class="k">Specific mass</div><div class="v" id="o-mass">–</div></div>
+          <div><div class="k">Launch price for parity</div><div class="v" id="o-bel">–</div></div>
+          <div><div class="k">Ground power price for parity</div><div class="v" id="o-bee">–</div></div>
+          <div><div class="k">Array + radiator area per kW</div><div class="v" id="o-area">–</div></div>
+          <div><div class="k">1 GW in orbit</div><div class="v" id="o-gw">–</div></div>
+        </div>
+        <div>
+          <div class="chart-title" style="margin-bottom:6px">Mass per kW of IT</div>
+          <div id="massbar"></div>
+          <div class="legend" id="masslegend" style="margin-top:8px"></div>
+        </div>
+        <div>
+          <div class="chart-title" style="margin-bottom:6px">Levelised cost per delivered kW-year</div>
+          <div id="costbars" style="display:grid;gap:8px"></div>
+          <div class="legend" id="costlegend" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="note" style="margin-top:10px">Fixed in the calculator: 650 km dawn–dusk orbit (3.9% eclipse, compute throttles in eclipse), silicon cells, PUE 1.2, 8% cost of capital, 15-year ground facility life, 3%/yr ground hardware failure rate.</p>
+</section>
+
+<section id="claims">
+  <header><p class="eyebrow">02 · State of play</p><h2>What is claimed, and what has flown</h2></header>
+  <div class="prose"><p>The 2025–26 announcements are large. Demonstrated hardware is small: the biggest compute satellite flown so far draws about a kilowatt.</p></div>
+  <div class="tbl"><table>
+    <thead><tr><th>Who</th><th>Claim</th><th>What has happened by Oct 2026</th></tr></thead>
+    <tbody>
+      <tr><td>Starcloud</td><td>5 GW cluster with ~4 × 4 km arrays; “10× cheaper energy”; 88,000-satellite FCC filing; Starcloud-3 at 200 kW “cost-competitive at $500/kg”</td><td>Starcloud-1 (60 kg, one H100) trained nanoGPT and ran Gemma in orbit, Dec 2025. No error or thermal data published.</td></tr>
+      <tr><td>Google Suncatcher</td><td>81-satellite TPU clusters flying 100–200 m apart; parity if launch ≤ $200/kg by mid-2030s</td><td>Proton-beam tests of Trillium TPU; 1.6 Tbps bench optical link. First 4-TPU, ~1 kW prototype launched 1 Oct 2026.</td></tr>
+      <tr><td>SpaceX / xAI</td><td>Up to 1 million satellites; “100 GW per year”; AI1 satellite at 120 kW with ~110 m² radiator</td><td>Starship reached orbit for the first time on 28 Sep 2026. The S-1 warns orbital data centers “may not achieve commercial viability”.</td></tr>
+      <tr><td>Blue Origin, Aetherflux, Axiom, NVIDIA, Sophia</td><td>51,000-satellite filing; nodes by 2027; space-grade Vera Rubin module</td><td>Small Axiom/Kepler edge nodes in orbit. The rest are plans.</td></tr>
+      <tr><td>China “Three-Body”</td><td>2,800 satellites, 1,000 POPS</td><td>12 satellites launched May 2025, ~744 TOPS each (edge inference).</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">Never demonstrated anywhere yet: a compute satellite above ~1 kW, a compute radiator above ~10 kW, close formation flying of dozens of satellites, commercial launch below ~$1,000/kg, or replacing a GPU in orbit.</p>
+</section>
+
+<section id="model">
+  <header><p class="eyebrow">03 · Method</p><h2>One kilowatt as the unit</h2></header>
+  <div class="prose">
+    <p>Every quantity is normalised to 1 kW of IT power: electricity reaching accelerators, hosts, memory and network. A data center is N copies of that kilowatt. Scale effects (launch cadence, debris, communications) are treated separately.</p>
+    <ul>
+      <li><b>Orbit.</b> Beta angle for each day of the year from J2 nodal precession, giving the eclipse fraction. Earth infrared and albedo loads on a sun-edge-on radiator from a 300,000-point view-factor integral over a Lambertian Earth.</li>
+      <li><b>Power and heat.</b> Array sized for IT plus bus at end of life; all electrical power becomes heat that the radiator must reject.</li>
+      <li><b>Reliability.</b> Radiation event rates from Google's TPU beam test, scaled by orbital dose; Young–Daly checkpointing; failures never repaired.</li>
+      <li><b>Economics.</b> Levelised cost per delivered kW-year. The ground facility lasts 15 years and gets refilled with chips; a satellite's power and thermal systems die with its chips.</li>
+    </ul>
+  </div>
+  <div class="eq" style="margin-top:14px">q(<i>T</i>) = η<sub>fin</sub> Σ<sub>faces</sub> [ ε σ <i>T</i><sup>4</sup> − ε·OLR·<i>F</i><sub>i</sub> − α<sub>s</sub>·a·S<sub>0</sub>·<i>F</i><sub>a,i</sub> ]&nbsp;&nbsp;&nbsp;&nbsp; m = (1+s)[ P<sub>array</sub>/α<sub>sa</sub> + ρ<sub>rad</sub>·Q/q(<i>T</i>) + m<sub>IT</sub> + m<sub>shield</sub> + m<sub>batt</sub> ]</div>
+  <div class="eq" style="margin-top:8px">Space cost = [ C<sub>IT</sub>(1+π) + m<sub>non-IT</sub>·c<sub>sc</sub> + m·c<sub>launch</sub> ]·(1+r)<sup>t<sub>build</sub></sup>·k(r, L) / A<sub>space</sub> + opex&nbsp;&nbsp;&nbsp;&nbsp; k(r,n) = r / (1 − (1+r)<sup>−n</sup>)</div>
+</section>
+
+<section id="power">
+  <header><p class="eyebrow">04 · Power</p><h2>The one thing space does better</h2></header>
+  <div class="prose">
+    <p>A dawn–dusk orbit rides the terminator, so sunlight is nearly continuous. Computing the beta angle day by day, eclipses only occur in a season around one solstice, and they are short.</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Altitude</th><th class="n">Time in eclipse</th><th class="n">Longest eclipse</th><th class="n">Eclipse season</th></tr></thead>
+    <tbody id="ecltable"></tbody>
+  </table></div>
+  <div class="prose" style="margin-top:14px">
+    <p>Per square metre of panel that is about <b>6× the yearly energy</b> of a good ground site (1361 × 0.96 W/m² against 1000 W/m² × 22% capacity factor), consistent with Google's “up to 8×”.</p>
+    <p><b>Cell choice decides the economics.</b> Triple-junction III-V cells are 30–33% efficient but cost $100–450 per watt; at 1.3 kW of array per kW of compute that is 4–20× the price of the GPUs. At scale the only option is silicon, as on Starlink: about $0.5/W, 22% efficient, 235 W/m² at the start of life and 207 W/m² after five years of 2.5%/yr fade.</p>
+    <p>Counting only the array and its share of structure, electricity from orbit costs about <b>$1.80/kWh today, $0.34 around 2030, $0.08 around 2035, and $0.014 under advocate assumptions</b>, against about $0.05 for ground solar. The 6× sunlight advantage is consumed by launch and space hardware until launch reaches about $200/kg.</p>
+  </div>
+</section>
+
+<section id="cooling">
+  <header><p class="eyebrow">05 · Cooling</p><h2>Harder than on Earth, but not the show-stopper</h2></header>
+  <div class="prose">
+    <p>In a dawn–dusk orbit the arrays face the Sun and the radiators can stay edge-on to it. What remains is Earth's infrared glow and reflected sunlight. With one face toward the zenith and one toward Earth, the integrated view factors are 0 and 0.81, and the effective sink temperature is about 205 K.</p>
+  </div>
+  <div class="chart" id="ch-thermal"></div>
+  <div class="prose" style="margin-top:14px">
+    <p>At 320 K the panel rejects about <b>740 W/m²</b>. The array delivers 207 W/m², so <b>the radiator needs only ~28% of the array's area</b>. The problem is mass: pumped-loop radiators with headers and micrometeoroid armour weigh 6–15 kg/m² (the ISS system is ~15). At 6 kg/m² the radiator is the heaviest subsystem.</p>
+    <p><b>Temperature is the master variable.</b> GPUs want ~45 °C coolant and throttle near 85 °C junction, which limits the radiator to about 305–335 K. Chips qualified for hotter operation would be the single most valuable change for an orbital design: at 360 K the same panel rejects ~1,270 W/m².</p>
+    <p><b>Two public claims, checked.</b> Starcloud's whitepaper uses 838 W/m² at 20 °C, which is exactly an ideal black body with no Earth load; the model gives 475–536 W/m². SpaceX's AI1 implies ~1,360 W/m² of planform, which needs a ~362 K (89 °C) radiator mean once Earth's load is included, hotter than any GPU liquid loop runs today.</p>
+  </div>
+  <div class="two" style="margin-top:12px">
+    <div class="chart" id="ch-hp"></div>
+    <div class="prose" style="align-content:center">
+      <p><b>Does a heat pump help?</b> Raising the radiator temperature shrinks it as <i>T</i><sup>4</sup>, but the pump's work must be generated and radiated too. Expanding to first order, a small lift pays only when (4η<sub>c</sub> − 1) × (radiator kg per W rejected) exceeds the array's kg per W generated. At 50% of Carnot it saves 5–10% with heavy ISS-class radiators and nothing with light deployables.</p>
+    </div>
+  </div>
+</section>
+
+<section id="radiation">
+  <header><p class="eyebrow">06 · Radiation &amp; computation errors</p><h2>Fine for inference, hard for synchronous training</h2></header>
+  <div class="prose">
+    <p>The dose has three parts: trapped protons in the South Atlantic Anomaly (hard to shield, rising steeply with altitude), outer-belt electrons at high latitude (stopped by a few mm of aluminium), and cosmic rays and solar particles over the poles (single-event effects rather than dose). The curve below is a two-component fit to published anchors, good to about a factor of three.</p>
+  </div>
+  <div class="two">
+    <div class="chart" id="ch-dose"></div>
+    <div class="prose" style="align-content:center">
+      <p>The first ~5 mm of aluminium removes the electrons; after that protons dominate and extra shielding buys little. Dose rises about e-fold per 120 km above ~600 km, which caps commercial HBM near 700 km. Ten millimetres of aluminium is 27 kg/m², affordable around compact compute boards (~1–2 kg/kW) but not around arrays or radiators.</p>
+    </div>
+  </div>
+  <div class="prose" style="margin-top:16px">
+    <p>The only public data on a modern datacenter accelerator is Google's 67 MeV proton test of the Trillium TPU with HBM: one silent data corruption (SDC) per ~17 rad, one uncorrectable HBM error (UECC) per ~44 rad, one functional interrupt per ~5 krad, HBM irregularities from ~2 krad, and no hard failure to 15 krad. Scaling by dose, per chip:</p>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th>Orbit, shielding</th><th class="n">rad/yr</th><th class="n">SDC/yr</th><th class="n">UECC/yr</th><th class="n">Years to HBM onset</th><th class="n">Interrupts vs ground*</th></tr></thead>
+    <tbody id="radtable"></tbody>
+  </table></div>
+  <p class="note">*Ground reference: Meta's Llama-3 run, 0.17 interrupts per GPU-year. First figure assumes each UECC crashes the job, as it does today; second assumes it is handled in place.</p>
+  <div class="two" style="margin-top:14px">
+    <div class="chart" id="ch-goodput"></div>
+    <div class="prose" style="align-content:center">
+      <p>At 650 km behind 10 mm, a 16,384-chip job sees <b>an SDC every 3.6 minutes and an HBM UECC every 9 minutes</b>. If each UECC crashes the job, optimal checkpointing leaves <b>~10% goodput</b>, against ~90% on the ground.</p>
+      <p>Inference tolerates this: about one corrupted answer per 10 million. Training needs recoverable memory errors, checksummed matrix multiplies and asynchronous, low-communication methods. None is how frontier models are trained today. No heavy-ion latchup data exist yet for any datacenter GPU or TPU.</p>
+    </div>
+  </div>
+  <div class="prose" style="margin-top:14px"><p><b>No repair.</b> Failed GPUs stay failed. At 3–6% per year, the fleet averages 86–90% of launched capacity over five years. Flying spares costs exactly the IT dollars they protect.</p></div>
+</section>
+
+<section id="materials">
+  <header><p class="eyebrow">07 · Materials &amp; environment</p><h2>Five-year lifetime is fine; scale brings new problems</h2></header>
+  <div class="tbl"><table>
+    <thead><tr><th>Effect</th><th>At 600–700 km over 5 years</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Atomic oxygen</td><td>20–50× less than at the ISS; Kapton in full ram erodes ~1.5 µm/yr, and arrays sit nearly edge-on to the flow</td><td><span class="chip good">Not limiting</span></td></tr>
+      <tr><td>Radiator coatings</td><td>White paint gained Δα ≈ 0.01 in 5.8 yr on LDEF; silver-Teflon Δα 0.06–0.08 in 8 yr on Hubble. Model uses α = 0.20 at end of life</td><td><span class="chip good">Designed in</span></td></tr>
+      <tr><td>Solar cell fade</td><td>Si ~2.5%/yr, III-V ~1–1.5%/yr; ~12% over five years</td><td><span class="chip good">Designed in</span></td></tr>
+      <tr><td>Thermal cycling</td><td>~1,300 shallow cycles per year, only in eclipse season</td><td><span class="chip good">Not limiting</span></td></tr>
+      <tr><td>Micrometeoroids &amp; debris</td><td>1 GW (~7 km²) takes ~70–700 centimetre-class hits per year; one puncture vents a pumped radiator loop</td><td><span class="chip serious">Design driver</span></td></tr>
+      <tr><td>Collision avoidance</td><td>Starlink made ~355,000 manoeuvres in a year. A km-scale structure cannot dodge; a tight formation must move as one</td><td><span class="chip serious">Unsolved at scale</span></td></tr>
+      <tr><td>Re-entry</td><td>~4,000–6,000 t/yr per GW. At 100 GW that is ~10× the natural meteoroid influx, mostly aluminium</td><td><span class="chip crit">Externality</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="comms">
+  <header><p class="eyebrow">08 · Communications</p><h2>Inference is easy; training must stay inside one spacecraft</h2></header>
+  <div class="tbl"><table>
+    <thead><tr><th>Need</th><th>Requirement</th><th>Available</th><th>Verdict</th></tr></thead>
+    <tbody>
+      <tr><td>Text inference</td><td>~0.1 Gbps per MW (×10 margin: 1.3 Gbps/MW)</td><td>Starlink V3 spec ~1 Tbps per satellite; optical downlink record 200 Gbps</td><td><span class="chip good">Easy</span></td></tr>
+      <tr><td>Latency</td><td>2–4 ms physical; ~25 ms via Starlink</td><td>Fine for chat and agents</td><td><span class="chip good">Fine</span></td></tr>
+      <tr><td>Weights, checkpoints</td><td>1–16 TB per model</td><td>4.8 TB per optical pass (TBIRD)</td><td><span class="chip good">Fine</span></td></tr>
+      <tr><td>Tensor / expert parallel</td><td>14.4 Tbps per GPU; ~1 Pbps per NVL72 rack</td><td>Nothing in free space</td><td><span class="chip crit">Inside one satellite</span></td></tr>
+      <tr><td>Data-parallel all-reduce</td><td>~3.2 Tbps per cut (1T params, 10 s step)</td><td>0.1–0.4 Tbps long-range links; ~10 Tbps targeted at &lt;1 km</td><td><span class="chip warn">Formation or DiLoCo</span></td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose" style="margin-top:14px"><p>The link physics explains Google's 100–200 m spacing. A 10 cm aperture at 1.55 µm has a near field out to ~6.5 km; inside 1 km it catches essentially all the light, at 100 km 0.26%, at 5,000 km one part in a million. Commercial DWDM receivers need hundreds of microwatts, so terabit links force satellites to fly almost touching, which trades a bandwidth problem for a collision problem.</p></div>
+</section>
+
+<section id="economics">
+  <header><p class="eyebrow">09 · Economics</p><h2>Chips are two thirds of the bill, and orbit cannot touch them</h2></header>
+  <div class="prose">
+    <p>On the ground a delivered kW-year costs about <b>$11.6k</b>: 66% compute hardware, 15% facility, 7% electricity, 12% operations. That is $2.37 per GPU-hour, matching SemiAnalysis's independent 2026 figure. Orbit removes electricity, the building and most operations, then adds qualification cost, eclipse throttling, unrepaired failures, and a “facility” thrown away with each chip generation.</p>
+    <p><b>With free launch and a free satellite, orbit would be only 6–20% cheaper at today's chip prices.</b> That is the ceiling.</p>
+  </div>
+  <div class="chart" id="ch-ratio"></div>
+  <div class="tbl" style="margin-top:10px"><table>
+    <thead><tr><th></th><th class="n">Today</th><th class="n">~2030</th><th class="n">~2035</th><th class="n">Advocate</th></tr></thead>
+    <tbody id="econtable"></tbody>
+  </table></div>
+  <div class="two" style="margin-top:18px">
+    <div class="chart" id="ch-elec"></div>
+    <div class="prose" style="align-content:center">
+      <p><b>The moving threshold.</b> If grid scarcity pushes ground power prices up, orbit breaks even when delivered power exceeds about <b>$0.84/kWh</b> (2030 design, $200/kg launch) or <b>$0.24/kWh</b> (2035 design). Behind-the-meter gas and solar-plus-storage supply data centers at roughly $0.08–0.15/kWh, which caps how far scarcity can help.</p>
+      <p>The stronger form of the argument is time-to-power: a $30k/kW chip idle for a year costs ~$7.6k/kW in capital, equivalent to ~$0.87/kWh. Orbit wins that race only if satellites and launches can be produced faster than ground power.</p>
+    </div>
+  </div>
+  <div class="two" style="margin-top:18px">
+    <div class="chart" id="ch-mc"></div>
+    <div class="chart" id="ch-sens"></div>
+  </div>
+  <div class="prose" style="margin-top:10px">
+    <p>Varying 13 inputs across a generous 2030s envelope (launch $100–3,000/kg, spacecraft hardware $300–3,000/kg, electricity $0.05–0.15/kWh, and more), the ratio has a median of <b>2.4×</b> and a 90% interval of <b>1.4–4.7×</b>. Fewer than 0.1% of 20,000 samples favour orbit. Launch price and spacecraft cost per kilogram dominate; electricity price barely registers.</p>
+  </div>
+  <div class="two" style="margin-top:18px">
+    <div class="chart" id="ch-capex"></div>
+    <div class="prose" style="align-content:center">
+      <p><b>Chip price shifts the balance.</b> As chips get cheaper per watt, the ratio tends toward the ratio of infrastructure costs. At $10k/kW, the 2030 case worsens to 2.8× while the advocate case improves to 0.60×. The advocates' story holds together only if space infrastructure becomes much cheaper than ground infrastructure <em>and</em> chips get cheap.</p>
+    </div>
+  </div>
+</section>
+
+<section id="scale">
+  <header><p class="eyebrow">10 · Scale</p><h2>A gigawatt is hundreds of heavy launches, every five years</h2></header>
+  <div class="tbl"><table>
+    <thead><tr><th>Design</th><th class="n">1 GW mass</th><th class="n">100-t launches</th><th class="n">Array + radiator</th><th class="n">Re-entry</th></tr></thead>
+    <tbody id="scaletable"></tbody>
+  </table></div>
+  <div class="prose" style="margin-top:12px"><p>The whole world launched a few thousand tonnes to orbit in 2025. SpaceX's “100 GW per year” would need about 9,300 Starship flights a year at advocate mass, or 30,000 at the 2030 mass. Area is not the constraint: a gigawatt needs 6–7.5 km² of thin structure.</p></div>
+</section>
+
+<section id="open">
+  <header><p class="eyebrow">11 · Where the unknowns are</p><h2>The levers that could change the answer</h2></header>
+  <div class="tbl"><table>
+    <thead><tr><th>Lever</th><th>What it would take</th><th>Why it matters</th></tr></thead>
+    <tbody>
+      <tr><td>Spacecraft cost per kg</td><td>Power and thermal hardware at $100–300/kg, 3–10× below Starlink: thin-film arrays, roll-to-roll radiators</td><td>Second-largest driver (rank correlation +0.54)</td></tr>
+      <tr><td>Launch price</td><td>Fully reusable Starship at high cadence, below $200/kg</td><td>Largest driver (+0.64). Below ~$100/kg it stops mattering</td></tr>
+      <tr><td>Hot chips</td><td>Accelerators and HBM qualified for ~120 °C junctions</td><td>Radiator area falls ~40% going from 320 K to 360 K</td></tr>
+      <tr><td>Fault-tolerant training</td><td>Recoverable UECCs, checksummed GEMMs, asynchronous training</td><td>Lifts training goodput from ~0.1 to ~0.9 at 650 km</td></tr>
+      <tr><td>Rad-tolerant accelerators</td><td>Hardened HBM base die, ECC on register files, latchup-safe rails</td><td>Opens 800–1,200 km orbits with fewer eclipses and less drag</td></tr>
+      <tr><td>Niche markets</td><td>Processing Earth-observation data in orbit, defence edge, sovereignty</td><td>Wins on downlink and jurisdiction, not cost per FLOP; 10–100 MW markets</td></tr>
+      <tr><td>Externalities</td><td>Launch CO₂, re-entry alumina, debris</td><td>Unpriced today; could bind before cost does</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="verdict">
+  <header><p class="eyebrow">12 · Verdict</p><h2>Feasible physics, poor investment</h2></header>
+  <div class="tbl"><table>
+    <thead><tr><th>Question</th><th>Answer</th><th></th></tr></thead>
+    <tbody>
+      <tr><td>Power balance</td><td>~6× more energy per m² than ground; 96% sunlit. Economical only with cheap silicon arrays.</td><td><span class="chip good">Favourable</span></td></tr>
+      <tr><td>Cooling</td><td>Radiator ≈ 28% of array area at ~740 W/m². Mass is the cost. Public claims of 838–1,400 W/m² assume ideal bodies or hot chips.</td><td><span class="chip good">Feasible</span></td></tr>
+      <tr><td>Communications</td><td>Inference fine. Training must fit in a satellite or a sub-km formation, or use low-communication algorithms.</td><td><span class="chip warn">Constrains design</span></td></tr>
+      <tr><td>Computation errors</td><td>Inference fine. Synchronous training at scale fails without new software. Altitude capped near 700 km for commercial HBM.</td><td><span class="chip serious">Open problem</span></td></tr>
+      <tr><td>Materials, lifetime</td><td>Not limiting over five years, except debris on pumped loops. Debris and re-entry grow with scale.</td><td><span class="chip warn">Watch at scale</span></td></tr>
+      <tr><td>Profitability</td><td>2–8× more expensive through ~2030; ±15% around 2035 with $200/kg launch; at best 15–25% cheaper at today's chip prices.</td><td><span class="chip crit">Not profitable</span></td></tr>
+    </tbody>
+  </table></div>
+  <h3 style="margin-top:22px;margin-bottom:10px">What would change the verdict</h3>
+  <ol class="signposts">
+    <li><span>A compute satellite of 100 kW or more running a year, with published error, thermal and failure statistics.</span></li>
+    <li><span>Starship commercial prices below $300/kg.</span></li>
+    <li><span>A satellite power-and-thermal system sold below ~$300/kg at more than 60 W/kg.</span></li>
+    <li><span>Heavy-ion latchup data and in-orbit SDC rates for a datacenter accelerator.</span></li>
+    <li><span>A frontier-scale training run done with asynchronous, fault-tolerant methods.</span></li>
+  </ol>
+</section>
+
+<section id="sources">
+  <header><p class="eyebrow">13 · Sources</p><h2>Where the numbers come from</h2></header>
+  <p class="note" style="margin-bottom:14px">Several figures came from secondary reporting because primary PDFs were unreachable during this study; check those against the originals before formal citation. The full model, figures and a longer written report are at <a href="https://github.com/LeiShi/space-datacenter-feasibility">github.com/LeiShi/space-datacenter-feasibility</a>.</p>
+  <div class="src">
+    <p><a href="https://arxiv.org/abs/2511.19468">Google, Towards a future space-based, highly scalable AI infrastructure system design (Suncatcher), 2025</a></p>
+    <p><a href="https://www.cnbc.com/2026/10/01/spacex-to-launch-google-ai-chips-to-orbit-with-planet-labs-satellites.html">CNBC, Suncatcher prototype launch, Oct 2026</a></p>
+    <p><a href="https://www.geekwire.com/2025/starcloud-power-training-ai-space/">GeekWire, Starcloud-1</a></p>
+    <p><a href="https://www.blocksandfiles.com/architecture/2025/10/23/starcloud-pitches-orbital-datacenters-as-cheaper-cooler-and-cleaner/1597295">Blocks &amp; Files, Starcloud whitepaper numbers</a></p>
+    <p><a href="https://www.datacenterdynamics.com/en/news/spacex-files-for-million-satellite-orbital-ai-data-center-megaconstellation">DCD, SpaceX million-satellite filing</a></p>
+    <p><a href="https://www.space.com/space-exploration/launches-spacecraft/spacex-starship-megarocket-flight-14-orbital-launch-success">Space.com, Starship Flight 14</a></p>
+    <p><a href="https://newsletter.semianalysis.com/p/to-boldly-go-the-case-for-space-datacenters">SemiAnalysis, The Case for Space Datacenters, 2026</a></p>
+    <p><a href="https://andrewmccalip.com/space-datacenters">A. McCalip, space data center calculator</a></p>
+    <p><a href="https://spectrum.ieee.org/orbital-data-centers">IEEE Spectrum, orbital data centers</a></p>
+    <p><a href="https://arxiv.org/abs/2604.27197">Orbital Data Centers: Spacecraft Constraints and Economic Viability, 2026</a></p>
+    <p><a href="https://epoch.ai/data-insights/ai-datacenter-cost-breakdown">Epoch AI, AI data center cost breakdown</a></p>
+    <p><a href="https://cordis.europa.eu/project/id/101082517">ESA/EU ASCEND study</a></p>
+    <p><a href="https://arxiv.org/abs/2407.21783">Meta, The Llama 3 Herd of Models (failure statistics)</a></p>
+    <p><a href="https://ntrs.nasa.gov/api/citations/20220013680/downloads/Shields-1_PLEO_Dosimetry_Measurements_09062022_final_rev2.pdf">NASA, Shields-1 dosimetry</a></p>
+    <p><a href="https://issnationallab.org/iss360/supercomputing-in-space-hpes-spaceborne-computer-returns/">ISS National Lab, HPE Spaceborne Computer</a></p>
+    <p><a href="https://ntrs.nasa.gov/api/citations/20070002707/downloads/20070002707.pdf">NASA, atomic oxygen erosion yields (MISSE)</a></p>
+    <p><a href="https://ntrs.nasa.gov/api/citations/20220002309/downloads/ORDEM31_Model_VnV_v3_20220224_corrected%20final_for%20STRIVES.pdf">NASA, ORDEM 3.1 debris model</a></p>
+    <p><a href="https://www.nasa.gov/centers-and-facilities/ames/nasa-partners-achieve-fastest-space-to-ground-laser-comms-link/">NASA, TBIRD 200 Gbps downlink</a></p>
+    <p><a href="https://arxiv.org/abs/2311.08105">DiLoCo, distributed low-communication training</a></p>
+    <p><a href="https://spw.aerospace.org/files/2024/07/5_EG1_P.-Jahelka_Presentation.pdf">Jahelka, space solar cell costs, Space Power Workshop 2024</a></p>
+  </div>
+  <footer>Model: space_dc_model.py (Python, numpy/scipy). The calculator above reproduces its four scenario results exactly.</footer>
+</section>
+    </main>
+  </div>
+</div>
+
+<script type="application/json" id="data">{"thermal":{"T":[260.0,261.0,262.0,263.0,264.0,265.0,266.0,267.0,268.0,269.0,270.0,271.0,272.0,273.0,274.0,275.0,276.0,277.0,278.0,279.0,280.0,281.0,282.0,283.0,284.0,285.0,286.0,287.0,288.0,289.0,290.0,291.0,292.0,293.0,294.0,295.0,296.0,297.0,298.0,299.0,300.0,301.0,302.0,303.0,304.0,305.0,306.0,307.0,308.0,309.0,310.0,311.0,312.0,313.0,314.0,315.0,316.0,317.0,318.0,319.0,320.0,321.0,322.0,323.0,324.0,325.0,326.0,327.0,328.0,329.0,330.0,331.0,332.0,333.0,334.0,335.0,336.0,337.0,338.0,339.0,340.0,341.0,342.0,343.0,344.0,345.0,346.0,347.0,348.0,349.0,350.0,351.0,352.0,353.0,354.0,355.0,356.0,357.0,358.0,359.0,360.0,361.0,362.0,363.0,364.0,365.0,366.0,367.0,368.0,369.0,370.0,371.0,372.0,373.0,374.0,375.0,376.0,377.0,378.0,379.0,380.0,381.0,382.0,383.0,384.0,385.0,386.0,387.0,388.0,389.0,390.0,391.0,392.0,393.0,394.0,395.0,396.0,397.0,398.0,399.0,400.0],"q_radial":[237.8,243.8,249.9,256.0,262.2,268.5,274.9,281.3,287.8,294.3,301.0,307.7,314.5,321.4,328.3,335.3,342.4,349.6,356.8,364.2,371.6,379.1,386.6,394.3,402.0,409.8,417.7,425.7,433.8,441.9,450.2,458.5,466.9,475.4,483.9,492.6,501.4,510.2,519.1,528.2,537.3,546.5,555.8,565.2,574.7,584.3,593.9,603.7,613.6,623.5,633.6,643.7,654.0,664.4,674.8,685.4,696.0,706.8,717.6,728.6,739.7,750.8,762.1,773.5,785.0,796.6,808.3,820.1,832.0,844.0,856.2,868.4,880.8,893.3,905.8,918.5,931.4,944.3,957.3,970.5,983.8,997.2,1011.0,1024.0,1038.0,1052.0,1066.0,1080.0,1094.0,1109.0,1123.0,1138.0,1152.0,1167.0,1182.0,1197.0,1213.0,1228.0,1244.0,1259.0,1275.0,1291.0,1307.0,1323.0,1339.0,1356.0,1372.0,1389.0,1406.0,1423.0,1440.0,1457.0,1475.0,1492.0,1510.0,1528.0,1546.0,1564.0,1582.0,1600.0,1619.0,1638.0,1657.0,1675.0,1695.0,1714.0,1733.0,1753.0,1773.0,1793.0,1813.0,1833.0,1853.0,1874.0,1894.0,1915.0,1936.0,1957.0,1979.0,2000.0,2022.0],"q_along":[298.6,304.6,310.6,316.8,323.0,329.3,335.6,342.0,348.5,355.1,361.7,368.5,375.2,382.1,389.1,396.1,403.2,410.3,417.6,424.9,432.3,439.8,447.4,455.0,462.8,470.6,478.5,486.5,494.5,502.7,510.9,519.2,527.6,536.1,544.7,553.4,562.1,571.0,579.9,588.9,598.0,607.2,616.5,625.9,635.4,645.0,654.7,664.4,674.3,684.3,694.3,704.5,714.7,725.1,735.6,746.1,756.8,767.5,778.4,789.4,800.4,811.6,822.9,834.2,845.7,857.3,869.0,880.8,892.8,904.8,916.9,929.2,941.5,954.0,966.6,979.3,992.1,1005.0,1018.0,1031.0,1045.0,1058.0,1071.0,1085.0,1099.0,1113.0,1127.0,1141.0,1155.0,1169.0,1184.0,1198.0,1213.0,1228.0,1243.0,1258.0,1273.0,1289.0,1304.0,1320.0,1336.0,1352.0,1368.0,1384.0,1400.0,1417.0,1433.0,1450.0,1467.0,1484.0,1501.0,1518.0,1535.0,1553.0,1571.0,1588.0,1606.0,1625.0,1643.0,1661.0,1680.0,1698.0,1717.0,1736.0,1755.0,1775.0,1794.0,1814.0,1833.0,1853.0,1873.0,1894.0,1914.0,1934.0,1955.0,1976.0,1997.0,2018.0,2039.0,2061.0,2083.0],"q_ideal":[387.6,393.6,399.7,405.9,412.1,418.3,424.7,431.1,437.6,444.2,450.8,457.5,464.3,471.2,478.1,485.1,492.2,499.4,506.7,514.0,521.4,528.9,536.5,544.1,551.8,559.7,567.6,575.5,583.6,591.7,600.0,608.3,616.7,625.2,633.8,642.4,651.2,660.0,669.0,678.0,687.1,696.3,705.6,715.0,724.5,734.1,743.8,753.5,763.4,773.4,783.4,793.6,803.8,814.2,824.6,835.2,845.8,856.6,867.5,878.4,889.5,900.7,911.9,923.3,934.8,946.4,958.1,969.9,981.8,993.9,1006.0,1018.0,1031.0,1043.0,1056.0,1068.0,1081.0,1094.0,1107.0,1120.0,1134.0,1147.0,1161.0,1174.0,1188.0,1202.0,1216.0,1230.0,1244.0,1258.0,1273.0,1288.0,1302.0,1317.0,1332.0,1347.0,1363.0,1378.0,1393.0,1409.0,1425.0,1441.0,1457.0,1473.0,1489.0,1506.0,1522.0,1539.0,1556.0,1573.0,1590.0,1607.0,1624.0,1642.0,1660.0,1678.0,1695.0,1714.0,1732.0,1750.0,1769.0,1787.0,1806.0,1825.0,1844.0,1864.0,1883.0,1903.0,1923.0,1942.0,1962.0,1983.0,2003.0,2024.0,2044.0,2065.0,2086.0,2107.0,2129.0,2150.0,2172.0],"array_W_m2_EOL":206.9},"heat_pump":{"3":{"Th":[320.0,324.0,328.0,332.0,336.0,340.0,344.0,348.0,352.0,356.0,360.0,364.0,368.0,372.0,376.0,380.0,384.0,388.0,392.0,396.0,400.0,404.0,408.0,412.0,416.0,420.0,424.0,428.0,432.0,436.0,440.0,444.0,448.0,452.0,456.0,460.0,464.0,468.0,472.0,476.0,480.0],"m":[24.91,25.07,25.24,25.42,25.61,25.81,26.01,26.22,26.44,26.66,26.89,27.12,27.36,27.6,27.85,28.1,28.35,28.61,28.87,29.14,29.41,29.68,29.95,30.23,30.51,30.79,31.07,31.36,31.64,31.93,32.23,32.52,32.82,33.11,33.41,33.71,34.01,34.32,34.62,34.93,35.23],"T_opt":320.0,"m_opt":24.91},"6":{"Th":[320.0,324.0,328.0,332.0,336.0,340.0,344.0,348.0,352.0,356.0,360.0,364.0,368.0,372.0,376.0,380.0,384.0,388.0,392.0,396.0,400.0,404.0,408.0,412.0,416.0,420.0,424.0,428.0,432.0,436.0,440.0,444.0,448.0,452.0,456.0,460.0,464.0,468.0,472.0,476.0,480.0],"m":[30.38,30.36,30.35,30.36,30.39,30.44,30.5,30.57,30.65,30.75,30.86,30.98,31.1,31.24,31.39,31.54,31.7,31.87,32.04,32.22,32.41,32.6,32.8,33.01,33.22,33.43,33.65,33.87,34.1,34.33,34.57,34.8,35.05,35.29,35.54,35.79,36.05,36.3,36.57,36.83,37.09],"T_opt":328.0,"m_opt":30.35},"10":{"Th":[320.0,324.0,328.0,332.0,336.0,340.0,344.0,348.0,352.0,356.0,360.0,364.0,368.0,372.0,376.0,380.0,384.0,388.0,392.0,396.0,400.0,404.0,408.0,412.0,416.0,420.0,424.0,428.0,432.0,436.0,440.0,444.0,448.0,452.0,456.0,460.0,464.0,468.0,472.0,476.0,480.0],"m":[37.68,37.41,37.17,36.95,36.77,36.61,36.48,36.37,36.28,36.21,36.15,36.12,36.1,36.09,36.1,36.13,36.16,36.21,36.27,36.34,36.42,36.51,36.61,36.71,36.83,36.96,37.09,37.23,37.37,37.53,37.69,37.85,38.02,38.2,38.38,38.57,38.76,38.96,39.16,39.36,39.57],"T_opt":372.0,"m_opt":36.09},"15":{"Th":[320.0,324.0,328.0,332.0,336.0,340.0,344.0,348.0,352.0,356.0,360.0,364.0,368.0,372.0,376.0,380.0,384.0,388.0,392.0,396.0,400.0,404.0,408.0,412.0,416.0,420.0,424.0,428.0,432.0,436.0,440.0,444.0,448.0,452.0,456.0,460.0,464.0,468.0,472.0,476.0,480.0],"m":[46.81,46.22,45.68,45.19,44.74,44.33,43.96,43.61,43.3,43.02,42.77,42.54,42.34,42.16,42.0,41.86,41.74,41.63,41.55,41.48,41.43,41.39,41.36,41.35,41.35,41.36,41.38,41.42,41.46,41.52,41.58,41.66,41.74,41.83,41.93,42.04,42.15,42.27,42.4,42.53,42.68],"T_opt":414.0,"m_opt":41.35}},"ratio_vs_launch":{"launch":[10.0,11.22,12.59,14.13,15.85,17.78,19.95,22.39,25.12,28.18,31.62,35.48,39.81,44.67,50.12,56.23,63.1,70.79,79.43,89.13,100.0,112.2,125.9,141.3,158.5,177.8,199.5,223.9,251.2,281.8,316.2,354.8,398.1,446.7,501.2,562.3,631.0,707.9,794.3,891.3,1000.0,1122.0,1259.0,1413.0,1585.0,1778.0,1995.0,2239.0,2512.0,2818.0,3162.0,3548.0,3981.0,4467.0,5012.0,5623.0,6310.0,7079.0,7943.0,8913.0,10000.0],"today":[3.457,3.459,3.461,3.464,3.466,3.469,3.472,3.476,3.48,3.485,3.49,3.495,3.502,3.509,3.517,3.526,3.537,3.548,3.561,3.575,3.592,3.61,3.63,3.653,3.679,3.708,3.74,3.776,3.817,3.863,3.914,3.972,4.036,4.109,4.19,4.281,4.383,4.498,4.627,4.772,4.934,5.116,5.32,5.549,5.806,6.094,6.418,6.781,7.188,7.645,8.158,8.734,9.379,10.1,10.92,11.83,12.85,14.0,15.29,16.73,18.35],"near_term":[1.524,1.525,1.526,1.528,1.529,1.531,1.533,1.535,1.537,1.54,1.543,1.546,1.55,1.554,1.559,1.564,1.57,1.577,1.584,1.593,1.602,1.613,1.625,1.638,1.653,1.67,1.689,1.71,1.733,1.76,1.79,1.823,1.861,1.903,1.951,2.004,2.063,2.13,2.205,2.289,2.384,2.49,2.609,2.742,2.892,3.06,3.248,3.46,3.697,3.963,4.262,4.597,4.973,5.395,5.868,6.399,6.995,7.664,8.414,9.256,10.2],"optimistic":[1.052,1.053,1.054,1.054,1.055,1.056,1.057,1.059,1.06,1.062,1.063,1.065,1.068,1.07,1.073,1.076,1.08,1.084,1.088,1.093,1.099,1.105,1.112,1.12,1.129,1.139,1.15,1.162,1.176,1.192,1.21,1.23,1.252,1.277,1.305,1.336,1.371,1.411,1.455,1.505,1.561,1.624,1.694,1.773,1.862,1.961,2.073,2.198,2.338,2.496,2.672,2.871,3.093,3.343,3.623,3.937,4.29,4.686,5.13,5.628,6.187],"advocate":[0.8254,0.8257,0.826,0.8264,0.8268,0.8273,0.8278,0.8284,0.8291,0.8299,0.8307,0.8317,0.8327,0.8339,0.8353,0.8368,0.8385,0.8404,0.8425,0.8449,0.8475,0.8505,0.8539,0.8577,0.8619,0.8667,0.872,0.878,0.8847,0.8923,0.9007,0.9102,0.9209,0.9328,0.9462,0.9613,0.9781,0.9971,1.018,1.042,1.069,1.099,1.133,1.17,1.213,1.26,1.314,1.374,1.441,1.516,1.601,1.696,1.802,1.922,2.056,2.206,2.375,2.564,2.777,3.015,3.283]},"elec_vs_launch":{"launch":[10.0,11.22,12.59,14.13,15.85,17.78,19.95,22.39,25.12,28.18,31.62,35.48,39.81,44.67,50.12,56.23,63.1,70.79,79.43,89.13,100.0,112.2,125.9,141.3,158.5,177.8,199.5,223.9,251.2,281.8,316.2,354.8,398.1,446.7,501.2,562.3,631.0,707.9,794.3,891.3,1000.0,1122.0,1259.0,1413.0,1585.0,1778.0,1995.0,2239.0,2512.0,2818.0,3162.0,3548.0,3981.0,4467.0,5012.0,5623.0,6310.0,7079.0,7943.0,8913.0,10000.0],"today":[2.782,2.784,2.786,2.789,2.791,2.795,2.798,2.802,2.807,2.812,2.817,2.824,2.831,2.839,2.848,2.858,2.869,2.881,2.896,2.912,2.929,2.949,2.972,2.997,3.025,3.057,3.093,3.132,3.177,3.227,3.284,3.347,3.418,3.498,3.587,3.687,3.8,3.926,4.068,4.227,4.405,4.605,4.829,5.081,5.364,5.681,6.037,6.436,6.883,7.386,7.95,8.582,9.292,10.09,10.98,11.98,13.11,14.37,15.79,17.38,19.16],"near_term":[0.656,0.6572,0.6585,0.66,0.6616,0.6635,0.6655,0.6679,0.6705,0.6734,0.6767,0.6804,0.6845,0.6891,0.6944,0.7002,0.7067,0.7141,0.7223,0.7316,0.742,0.7536,0.7667,0.7814,0.7978,0.8163,0.837,0.8603,0.8863,0.9156,0.9485,0.9853,1.027,1.073,1.125,1.183,1.249,1.322,1.405,1.498,1.601,1.718,1.849,1.995,2.16,2.345,2.552,2.784,3.045,3.338,3.666,4.035,4.448,4.912,5.432,6.016,6.671,7.407,8.231,9.157,10.2],"optimistic":[0.1375,0.1382,0.139,0.1398,0.1408,0.1419,0.1431,0.1445,0.146,0.1478,0.1497,0.1519,0.1543,0.1571,0.1602,0.1636,0.1675,0.1718,0.1767,0.1822,0.1883,0.1952,0.203,0.2117,0.2214,0.2323,0.2446,0.2583,0.2738,0.2911,0.3105,0.3323,0.3568,0.3842,0.415,0.4496,0.4884,0.5319,0.5807,0.6354,0.6969,0.7658,0.8432,0.93,1.027,1.137,1.259,1.397,1.551,1.724,1.919,2.137,2.381,2.656,2.964,3.309,3.697,4.132,4.62,5.168,5.782],"advocate":[-0.112,-0.1116,-0.1113,-0.1108,-0.1104,-0.1099,-0.1093,-0.1086,-0.1079,-0.107,-0.1061,-0.1051,-0.1039,-0.1026,-0.1011,-0.09946,-0.0976,-0.09552,-0.09318,-0.09056,-0.08762,-0.08432,-0.08062,-0.07647,-0.07181,-0.06658,-0.06071,-0.05413,-0.04674,-0.03845,-0.02915,-0.01872,-0.007009,0.006126,0.02087,0.0374,0.05596,0.07678,0.1001,0.1263,0.1558,0.1887,0.2258,0.2673,0.3139,0.3662,0.4249,0.4907,0.5646,0.6475,0.7405,0.8448,0.9619,1.093,1.241,1.406,1.592,1.8,2.033,2.295,2.59]},"dose":{"500":[8837.0,5096.0,2952.0,1721.0,1014.0,607.3,372.9,237.6,159.2,113.5,86.67,70.72,61.06,55.05,51.18,48.56,46.69,45.28,44.15,43.2,42.38,41.64,40.97,40.34,39.76,39.21,38.7,38.2,37.74,37.29,36.86,36.46,36.07,35.69,35.33,34.98,34.65,34.33,34.02,33.72],"650":[9143.0,5336.0,3160.0,1909.0,1188.0,770.5,527.5,385.1,300.7,249.9,218.6,198.7,185.5,176.3,169.5,164.3,160.0,156.3,153.1,150.2,147.6,145.2,142.9,140.8,138.7,136.8,135.0,133.3,131.7,130.2,128.7,127.2,125.9,124.6,123.3,122.1,120.9,119.8,118.7,117.7],"800":[10210.0,6172.0,3886.0,2566.0,1795.0,1340.0,1067.0,899.9,794.7,726.0,679.1,645.4,619.8,599.5,582.7,568.2,555.4,543.9,533.4,523.8,514.8,506.4,498.6,491.2,484.2,477.6,471.4,465.4,459.7,454.3,449.1,444.1,439.4,434.8,430.4,426.2,422.1,418.2,414.4,410.8],"1000":[16620.0,11210.0,8253.0,6515.0,5447.0,4766.0,4314.0,3998.0,3768.0,3592.0,3451.0,3334.0,3234.0,3147.0,3069.0,2999.0,2935.0,2877.0,2823.0,2772.0,2725.0,2681.0,2640.0,2601.0,2564.0,2529.0,2496.0,2464.0,2434.0,2405.0,2378.0,2351.0,2326.0,2302.0,2279.0,2257.0,2235.0,2214.0,2194.0,2175.0]},"depth":[0.5,1.0,1.5,2.0,2.5,3.0,3.5,4.0,4.5,5.0,5.5,6.0,6.5,7.0,7.5,8.0,8.5,9.0,9.5,10.0,10.5,11.0,11.5,12.0,12.5,13.0,13.5,14.0,14.5,15.0,15.5,16.0,16.5,17.0,17.5,18.0,18.5,19.0,19.5,20.0],"rates":{"500km_3mm":{"dose_rad_yr":607.3,"sdc_per_yr":35.73,"uecc_per_yr":13.8,"sefi_per_yr":0.1215,"years_to_hbm_onset":3.293,"interrupt_mult_uecc_crash":81.5,"interrupt_mult_uecc_handled":1.702},"500km_10mm":{"dose_rad_yr":43.2,"sdc_per_yr":2.541,"uecc_per_yr":0.9819,"sefi_per_yr":0.008641,"years_to_hbm_onset":46.29,"interrupt_mult_uecc_crash":6.726,"interrupt_mult_uecc_handled":1.05},"650km_3mm":{"dose_rad_yr":770.5,"sdc_per_yr":45.32,"uecc_per_yr":17.51,"sefi_per_yr":0.1541,"years_to_hbm_onset":2.596,"interrupt_mult_uecc_crash":103.1,"interrupt_mult_uecc_handled":1.891},"650km_10mm":{"dose_rad_yr":150.2,"sdc_per_yr":8.837,"uecc_per_yr":3.414,"sefi_per_yr":0.03005,"years_to_hbm_onset":13.31,"interrupt_mult_uecc_crash":20.91,"interrupt_mult_uecc_handled":1.174},"800km_3mm":{"dose_rad_yr":1340.0,"sdc_per_yr":78.81,"uecc_per_yr":30.45,"sefi_per_yr":0.268,"years_to_hbm_onset":1.493,"interrupt_mult_uecc_crash":178.6,"interrupt_mult_uecc_handled":2.549},"800km_10mm":{"dose_rad_yr":523.8,"sdc_per_yr":30.81,"uecc_per_yr":11.9,"sefi_per_yr":0.1048,"years_to_hbm_onset":3.818,"interrupt_mult_uecc_crash":70.42,"interrupt_mult_uecc_handled":1.606},"1000km_3mm":{"dose_rad_yr":4766.0,"sdc_per_yr":280.4,"uecc_per_yr":108.3,"sefi_per_yr":0.9533,"years_to_hbm_onset":0.4196,"interrupt_mult_uecc_crash":632.8,"interrupt_mult_uecc_handled":6.511},"1000km_10mm":{"dose_rad_yr":2772.0,"sdc_per_yr":163.1,"uecc_per_yr":63.0,"sefi_per_yr":0.5544,"years_to_hbm_onset":0.7215,"interrupt_mult_uecc_crash":368.4,"interrupt_mult_uecc_handled":4.205}},"goodput":{"N":[100.0,125.9,158.5,199.5,251.2,316.2,398.1,501.2,631.0,794.3,1000.0,1259.0,1585.0,1995.0,2512.0,3162.0,3981.0,5012.0,6310.0,7943.0,10000.0,12590.0,15850.0,19950.0,25120.0,31620.0,39810.0,50120.0,63100.0,79430.0,100000.0,125900.0,158500.0,199500.0,251200.0,316200.0,398100.0,501200.0,631000.0,794300.0,1000000.0],"curves":{"1":[0.9941,0.9934,0.9925,0.9916,0.9905,0.9893,0.9879,0.9863,0.9846,0.9825,0.9802,0.9776,0.9746,0.9711,0.9671,0.9626,0.9573,0.9512,0.9441,0.9358,0.9262,0.915,0.9017,0.8862,0.8678,0.846,0.8201,0.7892,0.7522,0.7078,0.6542,0.5895,0.5111,0.4157,0.2995,0.1575,0.0,0.0,0.0,0.0,0.0],"3":[0.9896,0.9882,0.9867,0.985,0.983,0.9808,0.9782,0.9753,0.9719,0.9681,0.9637,0.9585,0.9526,0.9458,0.9378,0.9285,0.9177,0.905,0.89,0.8723,0.8513,0.8264,0.7968,0.7613,0.7187,0.6674,0.6054,0.5304,0.4392,0.3282,0.1926,0.02651,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"10":[0.9802,0.9776,0.9746,0.9711,0.9671,0.9626,0.9573,0.9512,0.9441,0.9358,0.9262,0.915,0.9017,0.8862,0.8678,0.846,0.8201,0.7892,0.7522,0.7078,0.6542,0.5895,0.5111,0.4157,0.2995,0.1575,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],"30":[0.9637,0.9585,0.9526,0.9458,0.9378,0.9285,0.9177,0.905,0.89,0.8723,0.8513,0.8264,0.7968,0.7613,0.7187,0.6674,0.6054,0.5304,0.4392,0.3282,0.1926,0.02651,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]}},"mc":{"percentiles":{"p5":1.365,"p25":1.815,"p50":2.383,"p75":3.172,"p95":4.649},"p_space_cheaper":5e-05,"spearman":{"launch_usd_per_kg":0.6365,"sc_usd_per_kg":0.5416,"array_W_per_kg":-0.1631,"rad_kg_per_m2":0.2519,"T_rad":-0.1188,"it_kg_per_kW":0.06422,"it_capex_usd_per_kW":-0.1215,"fac_capex_usd_per_kW":-0.156,"elec_usd_per_kWh":-0.07419,"hw_afr_ground":0.1638,"space_afr_multiplier":0.1792,"discount_rate":0.01473,"lifetime_yr":-0.0011},"hist":[1,7,19,35,62,102,135,220,272,316,399,440,502,546,543,607,646,660,664,666,695,676,709,688,667,727,671,669,677,607,636,568,570,543,515,413,437,356,366,313,268,242,210,168,156,136,95,90,70,60,39,43,23,11,12,12,5,11,1,3],"hist_edges":[-0.01727,-0.001236,0.0148,0.03083,0.04687,0.0629,0.07893,0.09497,0.111,0.127,0.1431,0.1591,0.1751,0.1912,0.2072,0.2232,0.2393,0.2553,0.2713,0.2874,0.3034,0.3194,0.3355,0.3515,0.3675,0.3836,0.3996,0.4156,0.4317,0.4477,0.4637,0.4798,0.4958,0.5118,0.5279,0.5439,0.56,0.576,0.592,0.6081,0.6241,0.6401,0.6562,0.6722,0.6882,0.7043,0.7203,0.7363,0.7524,0.7684,0.7844,0.8005,0.8165,0.8325,0.8486,0.8646,0.8806,0.8967,0.9127,0.9287,0.9448]},"scen":{"today":{"node":{"P_array_BOL_W":1363.0,"A_array_m2":5.804,"A_rad_m2":1.745,"q_rad_W_m2":685.4,"W_heatpump_W":0.0,"m_array":13.63,"m_battery":0.6069,"m_radiator":17.45,"m_heatpump":0.0,"m_it":10.0,"m_shield":2.0,"m_struct":6.552,"m_total":50.23,"kg_per_kW":50.23,"W_per_kg_system":19.91},"space":91550.0,"ground":11560.0,"ratio":7.916,"space_parts":{"IT":10560.0,"spacecraft":24920.0,"launch":46100.0,"opex":6770.0,"financing":3200.0},"ground_parts":{"IT":7590.0,"facility":1770.0,"energy":841.5,"opex":1364.0},"breakeven_launch":null,"breakeven_elec":7.684,"ratio_free_launch_and_bus":1.024,"infra_kWh_space":9.24,"infra_kWh_ground":0.4535,"usd_per_gpu_hr_space":18.8,"usd_per_gpu_hr_ground":2.375,"design":{"altitude_m":650000.0,"cell_eff":0.22,"packing":0.88,"pointing_cos":0.99,"array_temp_loss":0.1,"degradation_per_yr":0.025,"pmad_eff":0.92,"array_W_per_kg":100,"bus_overhead":0.1,"battery_Wh_per_kg":180.0,"ride_through_eclipse":false,"T_rad":315,"eps_ir":0.88,"alpha_solar":0.2,"fin_eff":0.85,"rad_kg_per_m2":10.0,"rad_orientation":"radial","it_kg_per_kW":10.0,"shield_kg_per_kW":2.0,"struct_frac":0.15,"lifetime_yr":5.0},"econ":{"it_capex_usd_per_kW":30000.0,"discount_rate":0.08,"it_life_yr":5.0,"fac_capex_usd_per_kW":15000.0,"fac_life_yr":15.0,"pue":1.2,"elec_usd_per_kWh":0.08,"ground_opex_frac":0.03,"ground_availability":0.99,"launch_usd_per_kg":3000,"sc_usd_per_kg":2000,"array_usd_per_W":0.0,"space_it_premium":0.15,"space_opex_frac":0.02,"comms_usd_per_kW":1000,"deploy_delay_yr":0.5},"rel":{"gpu_interrupt_mtbf_yr_ground":5.781,"space_interrupt_multiplier":3.0,"checkpoint_write_s":30.0,"restart_s":300.0,"hw_afr_ground":0.03,"space_afr_multiplier":2.0,"spares_frac":0.0},"avail_space":0.8186},"near_term":{"node":{"P_array_BOL_W":1337.0,"A_array_m2":5.694,"A_rad_m2":1.587,"q_rad_W_m2":739.7,"W_heatpump_W":0.0,"m_array":8.912,"m_battery":0.4855,"m_radiator":9.522,"m_heatpump":0.0,"m_it":6.0,"m_shield":1.5,"m_struct":3.963,"m_total":30.38,"kg_per_kW":30.38,"W_per_kg_system":32.91},"space":23550.0,"ground":11560.0,"ratio":2.036,"space_parts":{"IT":9722.0,"spacecraft":5894.0,"launch":5370.0,"opex":1742.0,"financing":823.3},"ground_parts":{"IT":7590.0,"facility":1770.0,"energy":841.5,"opex":1364.0},"breakeven_launch":null,"breakeven_elec":1.219,"ratio_free_launch_and_bus":0.9434,"infra_kWh_space":1.578,"infra_kWh_ground":0.4535,"usd_per_gpu_hr_space":4.836,"usd_per_gpu_hr_ground":2.375,"design":{"altitude_m":650000.0,"cell_eff":0.22,"packing":0.88,"pointing_cos":0.99,"array_temp_loss":0.1,"degradation_per_yr":0.025,"pmad_eff":0.92,"array_W_per_kg":150.0,"bus_overhead":0.08,"battery_Wh_per_kg":180.0,"ride_through_eclipse":false,"T_rad":320.0,"eps_ir":0.88,"alpha_solar":0.2,"fin_eff":0.85,"rad_kg_per_m2":6.0,"rad_orientation":"radial","it_kg_per_kW":6.0,"shield_kg_per_kW":1.5,"struct_frac":0.15,"lifetime_yr":5.0},"econ":{"it_capex_usd_per_kW":30000.0,"discount_rate":0.08,"it_life_yr":5.0,"fac_capex_usd_per_kW":15000.0,"fac_life_yr":15.0,"pue":1.2,"elec_usd_per_kWh":0.08,"ground_opex_frac":0.03,"ground_availability":0.99,"launch_usd_per_kg":600.0,"sc_usd_per_kg":800.0,"array_usd_per_W":0.0,"space_it_premium":0.1,"space_opex_frac":0.02,"comms_usd_per_kW":500.0,"deploy_delay_yr":0.5},"rel":{"gpu_interrupt_mtbf_yr_ground":5.781,"space_interrupt_multiplier":3.0,"checkpoint_write_s":30.0,"restart_s":300.0,"hw_afr_ground":0.03,"space_afr_multiplier":1.5,"spares_frac":0.0},"avail_space":0.8502},"optimistic":{"node":{"P_array_BOL_W":1278.0,"A_array_m2":5.443,"A_rad_m2":1.346,"q_rad_W_m2":856.2,"W_heatpump_W":0.0,"m_array":5.111,"m_battery":0.3642,"m_radiator":5.383,"m_heatpump":0.0,"m_it":4.5,"m_shield":1.0,"m_struct":1.963,"m_total":18.32,"kg_per_kW":18.32,"W_per_kg_system":54.58},"space":13300.0,"ground":11560.0,"ratio":1.15,"space_parts":{"IT":9106.0,"spacecraft":1685.0,"launch":1059.0,"opex":983.5,"financing":464.9},"ground_parts":{"IT":7590.0,"facility":1770.0,"energy":841.5,"opex":1364.0},"breakeven_launch":null,"breakeven_elec":0.2449,"ratio_free_launch_and_bus":0.8837,"infra_kWh_space":0.4783,"infra_kWh_ground":0.4535,"usd_per_gpu_hr_space":2.731,"usd_per_gpu_hr_ground":2.375,"design":{"altitude_m":650000.0,"cell_eff":0.22,"packing":0.88,"pointing_cos":0.99,"array_temp_loss":0.1,"degradation_per_yr":0.02,"pmad_eff":0.92,"array_W_per_kg":250,"bus_overhead":0.06,"battery_Wh_per_kg":180.0,"ride_through_eclipse":false,"T_rad":330,"eps_ir":0.88,"alpha_solar":0.2,"fin_eff":0.85,"rad_kg_per_m2":4.0,"rad_orientation":"radial","it_kg_per_kW":4.5,"shield_kg_per_kW":1.0,"struct_frac":0.12,"lifetime_yr":5.0},"econ":{"it_capex_usd_per_kW":30000.0,"discount_rate":0.08,"it_life_yr":5.0,"fac_capex_usd_per_kW":15000.0,"fac_life_yr":15.0,"pue":1.2,"elec_usd_per_kWh":0.08,"ground_opex_frac":0.03,"ground_availability":0.99,"launch_usd_per_kg":200,"sc_usd_per_kg":400,"array_usd_per_W":0.0,"space_it_premium":0.05,"space_opex_frac":0.02,"comms_usd_per_kW":300,"deploy_delay_yr":0.5},"rel":{"gpu_interrupt_mtbf_yr_ground":5.781,"space_interrupt_multiplier":3.0,"checkpoint_write_s":30.0,"restart_s":300.0,"hw_afr_ground":0.03,"space_afr_multiplier":1.25,"spares_frac":0.0},"avail_space":0.8664},"advocate":{"node":{"P_array_BOL_W":1234.0,"A_array_m2":4.816,"A_rad_m2":1.16,"q_rad_W_m2":983.8,"W_heatpump_W":0.0,"m_array":2.467,"m_battery":0.3035,"m_radiator":2.32,"m_heatpump":0.0,"m_it":3.0,"m_shield":0.5,"m_struct":0.6873,"m_total":9.278,"kg_per_kW":9.278,"W_per_kg_system":107.8},"space":9659.0,"ground":11560.0,"ratio":0.8352,"space_parts":{"IT":8511.0,"spacecraft":295.5,"launch":131.6,"opex":370.9,"financing":350.6},"ground_parts":{"IT":7590.0,"facility":1770.0,"energy":841.5,"opex":1364.0},"breakeven_launch":719.9,"breakeven_elec":-0.1011,"ratio_free_launch_and_bus":0.7953,"infra_kWh_space":0.131,"infra_kWh_ground":0.4535,"usd_per_gpu_hr_space":1.983,"usd_per_gpu_hr_ground":2.375,"design":{"altitude_m":650000.0,"cell_eff":0.24,"packing":0.88,"pointing_cos":0.99,"array_temp_loss":0.1,"degradation_per_yr":0.015,"pmad_eff":0.92,"array_W_per_kg":500,"bus_overhead":0.05,"battery_Wh_per_kg":180.0,"ride_through_eclipse":false,"T_rad":340,"eps_ir":0.88,"alpha_solar":0.2,"fin_eff":0.85,"rad_kg_per_m2":2.0,"rad_orientation":"radial","it_kg_per_kW":3.0,"shield_kg_per_kW":0.5,"struct_frac":0.08,"lifetime_yr":5.0},"econ":{"it_capex_usd_per_kW":30000.0,"discount_rate":0.08,"it_life_yr":5.0,"fac_capex_usd_per_kW":15000.0,"fac_life_yr":15.0,"pue":1.2,"elec_usd_per_kWh":0.08,"ground_opex_frac":0.03,"ground_availability":0.99,"launch_usd_per_kg":50,"sc_usd_per_kg":150,"array_usd_per_W":0.0,"space_it_premium":0.0,"space_opex_frac":0.01,"comms_usd_per_kW":100,"deploy_delay_yr":0.5},"rel":{"gpu_interrupt_mtbf_yr_ground":5.781,"space_interrupt_multiplier":3.0,"checkpoint_write_s":30.0,"restart_s":300.0,"hw_afr_ground":0.03,"space_afr_multiplier":1.0,"spares_frac":0.0},"avail_space":0.8828}},"vf":{"radial":{"F":[0.0,0.8082],"Fa":[0.0,0.07704]},"along":{"F":[0.2407,0.2407],"Fa":[0.02183,0.02183]}},"sun":{"mean_eclipse_frac":0.03861,"max_eclipse_min":19.66,"days_with_eclipse":87,"beta_min_deg":58.58,"period_min":97.58},"sun_alt":{"500":{"mean_eclipse_frac":0.0543,"max_eclipse_min":22.6,"days_with_eclipse":103,"beta_min_deg":59.17,"period_min":94.47},"650":{"mean_eclipse_frac":0.03861,"max_eclipse_min":19.66,"days_with_eclipse":87,"beta_min_deg":58.58,"period_min":97.58},"800":{"mean_eclipse_frac":0.02669,"max_eclipse_min":16.83,"days_with_eclipse":73,"beta_min_deg":57.97,"period_min":100.7},"1000":{"mean_eclipse_frac":0.01475,"max_eclipse_min":12.96,"days_with_eclipse":55,"beta_min_deg":57.09,"period_min":105.0},"1200":{"mean_eclipse_frac":0.00599,"max_eclipse_min":8.549,"days_with_eclipse":35,"beta_min_deg":56.15,"period_min":109.3}},"it_capex":{"it_capex":[5000.0,6000.0,7000.0,8000.0,9000.0,10000.0,11000.0,12000.0,13000.0,14000.0,15000.0,16000.0,17000.0,18000.0,19000.0,20000.0,21000.0,22000.0,23000.0,24000.0,25000.0,26000.0,27000.0,28000.0,29000.0,30000.0,31000.0,32000.0,33000.0,34000.0,35000.0,36000.0,37000.0,38000.0,39000.0,40000.0],"today":[18.22,17.22,16.33,15.54,14.83,14.18,13.59,13.06,12.57,12.12,11.7,11.32,10.96,10.63,10.32,10.03,9.761,9.506,9.266,9.04,8.827,8.625,8.434,8.252,8.08,7.916,7.76,7.612,7.47,7.334,7.205,7.08,6.962,6.847,6.738,6.633],"near_term":[3.226,3.11,3.008,2.916,2.834,2.759,2.692,2.63,2.573,2.522,2.474,2.429,2.388,2.35,2.314,2.281,2.249,2.22,2.192,2.166,2.141,2.118,2.096,2.075,2.055,2.036,2.018,2.001,1.985,1.969,1.954,1.94,1.926,1.913,1.9,1.888],"optimistic":[1.067,1.075,1.082,1.089,1.094,1.1,1.104,1.109,1.112,1.116,1.119,1.123,1.125,1.128,1.131,1.133,1.135,1.137,1.139,1.141,1.143,1.144,1.146,1.147,1.149,1.15,1.151,1.152,1.154,1.155,1.156,1.157,1.158,1.159,1.159,1.16],"advocate":[0.445,0.4828,0.5165,0.5465,0.5735,0.598,0.6202,0.6404,0.659,0.676,0.6917,0.7063,0.7198,0.7324,0.7441,0.7551,0.7654,0.775,0.7841,0.7927,0.8008,0.8084,0.8156,0.8225,0.829,0.8352,0.8411,0.8468,0.8521,0.8573,0.8622,0.8669,0.8714,0.8757,0.8799,0.8838]}}</script>
+<script>
+// JS port of space_dc_model.py (sizing + economics), per kW of IT power.
+const M = (() => {
+  const SIGMA = 5.670374e-8, S0 = 1361, OLR = 239, ALB = 0.30, HPY = 8766, RE = 6371e3, MU = 3.986004418e14;
+  const ENV = { F: [0.0, 0.80817], Fa: [0.0, 0.07704] };      // radial radiator, 650 km, orbit-averaged
+  const SUN = { ecl: 0.03861, eclMax: 19.664 };                // 650 km dawn-dusk SSO
+  const base = {
+    cell_eff: 0.22, packing: 0.88, pointing_cos: 0.99, array_temp_loss: 0.10, degradation_per_yr: 0.025,
+    pmad_eff: 0.92, array_W_per_kg: 150, bus_overhead: 0.08, battery_Wh_per_kg: 180,
+    T_rad: 320, eps_ir: 0.88, alpha_solar: 0.20, fin_eff: 0.85, rad_kg_per_m2: 6,
+    it_kg_per_kW: 6, shield_kg_per_kW: 1.5, struct_frac: 0.15, lifetime_yr: 5,
+    it_capex: 30000, discount: 0.08, fac_capex: 15000, fac_life: 15, pue: 1.2, elec: 0.08,
+    ground_opex: 0.03, ground_avail: 0.99, launch: 600, sc: 800, it_premium: 0.10, space_opex: 0.02,
+    comms: 500, deploy_delay: 0.5, afr_ground: 0.03, afr_mult: 1.5,
+  };
+  const presets = {
+    today: { array_W_per_kg: 100, rad_kg_per_m2: 10, it_kg_per_kW: 10, T_rad: 315, shield_kg_per_kW: 2, bus_overhead: 0.10,
+             launch: 3000, sc: 2000, it_premium: 0.15, comms: 1000, afr_mult: 2.0 },
+    near_term: {},
+    optimistic: { array_W_per_kg: 250, rad_kg_per_m2: 4, it_kg_per_kW: 4.5, T_rad: 330, degradation_per_yr: 0.02,
+                  struct_frac: 0.12, shield_kg_per_kW: 1.0, bus_overhead: 0.06, launch: 200, sc: 400, it_premium: 0.05,
+                  comms: 300, afr_mult: 1.25 },
+    advocate: { cell_eff: 0.24, array_W_per_kg: 500, rad_kg_per_m2: 2, it_kg_per_kW: 3, T_rad: 340, degradation_per_yr: 0.015,
+                struct_frac: 0.08, shield_kg_per_kW: 0.5, bus_overhead: 0.05, launch: 50, sc: 150, it_premium: 0,
+                comms: 100, space_opex: 0.01, afr_mult: 1.0 },
+  };
+  const crf = (r, n) => (r > 0 ? r / (1 - Math.pow(1 + r, -n)) : 1 / n);
+  function radFlux(T, p) {
+    let q = 0;
+    for (let i = 0; i < 2; i++) q += p.eps_ir * SIGMA * T ** 4 - p.eps_ir * OLR * ENV.F[i] - p.alpha_solar * ALB * S0 * ENV.Fa[i];
+    return p.fin_eff * q;
+  }
+  function size(p) {
+    const Pit = 1000, Pbus = p.bus_overhead * Pit, Pload = Pit + Pbus, f = SUN.ecl;
+    const Parr = (Pload * (1 - f) + Pbus * f / 0.9) / (1 - f) / p.pmad_eff;
+    const bol = S0 * p.cell_eff * p.packing * p.pointing_cos * (1 - p.array_temp_loss);
+    const eol = bol * Math.pow(1 - p.degradation_per_yr, p.lifetime_yr);
+    const m_array = Parr / p.array_W_per_kg * (bol / eol);
+    const m_batt = Pbus * SUN.eclMax / 60 / 0.3 / p.battery_Wh_per_kg;
+    const Q = Pload / p.pmad_eff, q = radFlux(p.T_rad, p);
+    const A_rad = Q / q, m_rad = A_rad * p.rad_kg_per_m2;
+    const sub = m_array + m_batt + m_rad + p.it_kg_per_kW + p.shield_kg_per_kW;
+    const m_struct = p.struct_frac * sub;
+    return { A_array: Parr / eol, A_rad, q, m_array, m_batt, m_rad, m_it: p.it_kg_per_kW, m_shield: p.shield_kg_per_kW,
+             m_struct, total: sub + m_struct, eol };
+  }
+  function surviving(afr, L) { const lam = -Math.log(1 - afr); return (1 - Math.exp(-lam * L)) / (lam * L); }
+  function ground(p) {
+    const it = p.it_capex * crf(p.discount, p.lifetime_yr), fac = p.fac_capex * crf(p.discount, p.fac_life);
+    const energy = p.pue * p.elec * HPY * p.ground_avail, opex = p.ground_opex * (p.it_capex + p.fac_capex);
+    const d = p.ground_avail;
+    const parts = { IT: it / d, facility: fac / d, energy: energy / d, opex: opex / d };
+    return { total: (it + fac + energy + opex) / d, parts };
+  }
+  function evaluate(p) {
+    const n = size(p);
+    const avail = (1 - SUN.ecl) * surviving(Math.min(0.99, p.afr_ground * p.afr_mult), p.lifetime_yr) * 0.99;
+    const itc = p.it_capex * (1 + p.it_premium);
+    const hw = (n.total - p.it_kg_per_kW) * p.sc + p.comms, launch = n.total * p.launch;
+    const capex0 = itc + hw + launch, capex = capex0 * Math.pow(1 + p.discount, p.deploy_delay);
+    const k = crf(p.discount, p.lifetime_yr), opex = p.space_opex * capex;
+    const parts = { IT: itc * k / avail, spacecraft: hw * k / avail, launch: launch * k / avail, opex: opex / avail,
+                    financing: (capex - capex0) * k / avail };
+    const space = Object.values(parts).reduce((a, b) => a + b, 0);
+    const g = ground(p);
+    return { node: n, avail, space, ground: g.total, ratio: space / g.total, sp: parts, gp: g.parts };
+  }
+  function solve(f, lo, hi) { // bisection on monotone f
+    let flo = f(lo), fhi = f(hi);
+    if (flo * fhi > 0) return null;
+    for (let i = 0; i < 80; i++) { const mid = (lo + hi) / 2, fm = f(mid); if (fm * flo > 0) { lo = mid; flo = fm; } else hi = mid; }
+    return (lo + hi) / 2;
+  }
+  function breakevenLaunch(p) {
+    const f = c => evaluate({ ...p, launch: c }).ratio - 1;
+    if (f(0) > 0) return null;
+    return solve(f, 0, 1e5);
+  }
+  function breakevenElec(p) {
+    const s = evaluate(p).space;
+    return solve(e => ground({ ...p, elec: e }).total - s, -5, 50);
+  }
+  return { base, presets, evaluate, breakevenLaunch, breakevenElec, radFlux, size, params: p => ({ ...base, ...p }) };
+})();
+if (typeof module !== "undefined") module.exports = M;
+
+</script>
+<script>
+(() => {
+const D = JSON.parse(document.getElementById("data").textContent);
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 0) => v.toLocaleString("en-US", { maximumFractionDigits: d, minimumFractionDigits: d });
+const usd = v => "$" + (Math.abs(v) >= 1e4 ? fmt(v / 1000, 1) + "k" : fmt(v, 0));
+const SCN = [["today", "Today", "--s1"], ["near_term", "~2030", "--s2"], ["optimistic", "~2035", "--s3"], ["advocate", "Advocate", "--s7"]];
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- static tables ---------- */
+$("ecltable").innerHTML = Object.entries(D.sun_alt).map(([a, v]) =>
+  `<tr${a === "650" ? ' class="hl"' : ""}><td>${a} km</td><td class="n">${fmt(100 * v.mean_eclipse_frac, 1)}%</td><td class="n">${fmt(v.max_eclipse_min, 1)} min</td><td class="n">${v.days_with_eclipse} d/yr</td></tr>`).join("");
+const radRows = [["500km_10mm", "500 km, 10 mm"], ["650km_10mm", "650 km, 10 mm"], ["650km_3mm", "650 km, 3 mm"], ["800km_10mm", "800 km, 10 mm"], ["1000km_10mm", "1000 km, 10 mm"]];
+$("radtable").innerHTML = radRows.map(([k, l]) => { const r = D.rates[k];
+  return `<tr${k === "650km_10mm" ? ' class="hl"' : ""}><td>${l}</td><td class="n">${fmt(r.dose_rad_yr)}</td><td class="n">${fmt(r.sdc_per_yr, 1)}</td><td class="n">${fmt(r.uecc_per_yr, 1)}</td><td class="n">${fmt(r.years_to_hbm_onset, 1)}</td><td class="n">×${fmt(r.interrupt_mult_uecc_crash)} / ×${fmt(r.interrupt_mult_uecc_handled, 1)}</td></tr>`; }).join("");
+const S = D.scen, ord = ["today", "near_term", "optimistic", "advocate"];
+const erow = (label, f, hl) => `<tr${hl ? ' class="hl"' : ""}><td>${label}</td>${ord.map(n => `<td class="n">${f(S[n])}</td>`).join("")}</tr>`;
+$("econtable").innerHTML = [
+  erow("Orbit, $ per delivered kW-yr", s => usd(s.space)),
+  erow("Ground, $ per delivered kW-yr", s => usd(s.ground)),
+  erow("Orbit ÷ ground", s => fmt(s.ratio, 2) + "×", true),
+  erow("$ per GPU-hour, orbit vs ground", s => "$" + fmt(s.usd_per_gpu_hr_space, 2) + " vs $" + fmt(s.usd_per_gpu_hr_ground, 2)),
+  erow("Ratio if launch and satellite were free", s => fmt(s.ratio_free_launch_and_bus, 2) + "×"),
+  erow("Launch price for parity", s => s.breakeven_launch == null ? "none" : "$" + fmt(s.breakeven_launch) + "/kg"),
+  erow("Ground power price for parity", s => s.breakeven_elec < 0 ? "orbit wins at $0" : "$" + fmt(s.breakeven_elec, 2) + "/kWh"),
+].join("");
+const scLabel = { today: "Today", near_term: "~2030", optimistic: "~2035", advocate: "Advocate" };
+$("scaletable").innerHTML = ord.map(n => { const k = S[n].node.kg_per_kW, a = S[n].node.A_array_m2 + S[n].node.A_rad_m2;
+  return `<tr><td>${scLabel[n]}</td><td class="n">${fmt(k * 1000)} t</td><td class="n">${fmt(k * 10)}</td><td class="n">${fmt(a, 1)} km²</td><td class="n">${fmt(k * 200)} t/yr</td></tr>`; }).join("");
+
+/* ---------- chart kit ---------- */
+function niceLog(lo, hi) { const t = []; for (let e = Math.floor(Math.log10(lo)); e <= Math.ceil(Math.log10(hi)); e++) for (const m of [1, 2, 5]) { const v = m * 10 ** e; if (v >= lo * 0.999 && v <= hi * 1.001) t.push(v); } return t; }
+function niceLin(lo, hi, n = 5) { const span = hi - lo, step0 = span / n, mag = 10 ** Math.floor(Math.log10(step0)); const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= step0); const t = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) t.push(+v.toFixed(10)); return t; }
+const tickFmt = v => Math.abs(v) >= 1000 ? (v / 1000 >= 1000 ? fmt(v / 1e6) + "M" : fmt(v / 1000, v % 1000 ? 1 : 0) + "k") : (Math.abs(v) < 1 && v !== 0 ? String(+v.toPrecision(2)) : fmt(v, v % 1 ? 1 : 0));
+
+function lineChart(el, o) {
+  el.innerHTML = `<div class="chart-head"><div class="chart-title">${o.title}</div><div class="legend">${o.series.map(s => `<span><i style="--c:var(${s.color})"></i>${s.name}</span>`).join("")}</div></div><div class="plot"></div>`;
+  const plot = el.querySelector(".plot");
+  const draw = () => {
+    const W = Math.max(280, plot.clientWidth), H = o.height || (W < 480 ? 240 : 290);
+    const m = { l: 52, r: 14, t: 12, b: 40 };
+    const xs = o.x, [x0, x1] = o.xr || [Math.min(...xs), Math.max(...xs)];
+    const [y0, y1] = o.yr;
+    const sx = o.xlog ? v => m.l + (Math.log(v) - Math.log(x0)) / (Math.log(x1) - Math.log(x0)) * (W - m.l - m.r) : v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
+    const sy = o.ylog ? v => H - m.b - (Math.log(v) - Math.log(y0)) / (Math.log(y1) - Math.log(y0)) * (H - m.t - m.b) : v => H - m.b - (v - y0) / (y1 - y0) * (H - m.t - m.b);
+    const clampY = v => Math.max(m.t, Math.min(H - m.b, sy(v)));
+    const xt = o.xticks || (o.xlog ? niceLog(x0, x1) : niceLin(x0, x1));
+    const yt = o.yticks || (o.ylog ? niceLog(y0, y1) : niceLin(y0, y1));
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.title}">`;
+    for (const b of o.bands || []) s += `<rect x="${o.bandAxis === "x" ? sx(b[0]) : m.l}" y="${o.bandAxis === "x" ? m.t : sy(b[1])}" width="${o.bandAxis === "x" ? sx(b[1]) - sx(b[0]) : W - m.l - m.r}" height="${o.bandAxis === "x" ? H - m.t - m.b : sy(b[0]) - sy(b[1])}" fill="${css(b[3] || "--s3")}" fill-opacity="0.12"/><text class="lab" x="${(o.bandAxis === "x" ? sx(b[0]) : m.l) + 6}" y="${(o.bandAxis === "x" ? m.t + 14 : sy(b[1]) - 5)}">${b[2]}</text>`;
+    for (const v of yt) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="${css("--grid")}" stroke-width="1"/><text x="${m.l - 6}" y="${sy(v) + 4}" text-anchor="end">${tickFmt(v)}</text>`;
+    for (const v of xt) s += `<text x="${sx(v)}" y="${H - m.b + 16}" text-anchor="middle">${o.xfmt ? o.xfmt(v) : tickFmt(v)}</text>`;
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="${css("--axis")}"/>`;
+    for (const h of o.hlines || []) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(h[0])}" y2="${sy(h[0])}" stroke="${css("--ink-2")}" stroke-width="1"/><text class="lab" x="${W - m.r - 4}" y="${sy(h[0]) - 6}" text-anchor="end">${h[1]}</text>`;
+    for (const v of o.vlines || []) s += `<line x1="${sx(v[0])}" x2="${sx(v[0])}" y1="${m.t}" y2="${H - m.b}" stroke="${css("--grid")}" stroke-width="1.5"/><text x="${sx(v[0]) + 4}" y="${m.t + 12}">${v[1]}</text>`;
+    for (const sr of o.series) {
+      const pts = xs.map((x, i) => [x, sr.y[i]]).filter(p => p[1] != null && (!o.ylog || p[1] > 0));
+      s += `<path d="${pts.map((p, i) => (i ? "L" : "M") + sx(p[0]).toFixed(1) + "," + clampY(p[1]).toFixed(1)).join("")}" fill="none" stroke="${css(sr.color)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+      for (const mk of sr.marks || []) s += `<circle cx="${sx(mk[0])}" cy="${sy(mk[1])}" r="4.5" fill="${css(sr.color)}" stroke="${css("--surface")}" stroke-width="2"/>`;
+    }
+    s += `<text class="lab" x="${(W + m.l) / 2}" y="${H - 6}" text-anchor="middle">${o.xlabel}</text>`;
+    s += `<text class="lab" transform="translate(12 ${(H - m.b + m.t) / 2}) rotate(-90)" text-anchor="middle">${o.ylabel}</text>`;
+    s += `<line class="xh" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="${css("--muted")}" stroke-width="1" visibility="hidden"/>`;
+    s += `<rect class="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg><div class="tip" hidden></div>`;
+    plot.innerHTML = s;
+    const svg = plot.querySelector("svg"), xh = svg.querySelector(".xh"), tip = plot.querySelector(".tip"), hit = svg.querySelector(".hit");
+    const move = ev => {
+      const r = svg.getBoundingClientRect(), px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+      let bi = 0, bd = 1e9; xs.forEach((x, i) => { const d = Math.abs(sx(x) - px); if (d < bd) { bd = d; bi = i; } });
+      xh.setAttribute("x1", sx(xs[bi])); xh.setAttribute("x2", sx(xs[bi])); xh.setAttribute("visibility", "visible");
+      tip.innerHTML = `<b>${o.xname}: ${o.xfmtTip ? o.xfmtTip(xs[bi]) : tickFmt(xs[bi])}</b><br>` + o.series.map(sr => sr.y[bi] == null ? "" : `<span class="k" style="--c:${css(sr.color)}"></span>${sr.name}: ${o.yfmt ? o.yfmt(sr.y[bi]) : tickFmt(sr.y[bi])}`).filter(Boolean).join("<br>");
+      tip.hidden = false;
+      const tw = tip.offsetWidth; let left = sx(xs[bi]) + 12; if (left + tw > W) left = sx(xs[bi]) - tw - 12;
+      tip.style.left = Math.max(0, left) + "px"; tip.style.top = (m.t + 4) + "px";
+    };
+    hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move);
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("visibility", "hidden"); });
+  };
+  draw(); charts.push(draw);
+}
+
+function barChart(el, o) { // horizontal bars, one value per row
+  el.innerHTML = `<div class="chart-head"><div class="chart-title">${o.title}</div></div><div class="plot"></div>`;
+  const plot = el.querySelector(".plot");
+  const draw = () => {
+    const W = Math.max(280, plot.clientWidth), rowH = 22, m = { l: o.labelW || 150, r: 44, t: 6, b: 30 };
+    const H = m.t + m.b + o.rows.length * rowH;
+    const [x0, x1] = o.xr, sx = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r);
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.title}">`;
+    for (const v of niceLin(x0, x1, 4)) s += `<line x1="${sx(v)}" x2="${sx(v)}" y1="${m.t}" y2="${H - m.b}" stroke="${css("--grid")}"/><text x="${sx(v)}" y="${H - m.b + 14}" text-anchor="middle">${fmt(v, 1)}</text>`;
+    s += `<line x1="${sx(0)}" x2="${sx(0)}" y1="${m.t}" y2="${H - m.b}" stroke="${css("--axis")}"/>`;
+    o.rows.forEach((r, i) => {
+      const y = m.t + i * rowH + 4, h = rowH - 8, a = sx(Math.min(0, r.v)), b = sx(Math.max(0, r.v));
+      s += `<text class="lab" x="${m.l - 8}" y="${y + h - 2}" text-anchor="end">${r.label}</text>`;
+      s += `<rect x="${a}" y="${y}" width="${Math.max(1, b - a)}" height="${h}" rx="3" fill="${css(r.v >= 0 ? "--s2" : "--s1")}"><title>${r.label}: ${fmt(r.v, 2)}</title></rect>`;
+      s += `<text x="${r.v >= 0 ? b + 4 : a - 4}" y="${y + h - 2}" text-anchor="${r.v >= 0 ? "start" : "end"}">${fmt(r.v, 2)}</text>`;
+    });
+    s += `<text class="lab" x="${(W + m.l) / 2}" y="${H - 4}" text-anchor="middle">${o.xlabel}</text></svg>`;
+    plot.innerHTML = s;
+  };
+  draw(); charts.push(draw);
+}
+
+function histChart(el, o) {
+  el.innerHTML = `<div class="chart-head"><div class="chart-title">${o.title}</div></div><div class="plot"></div>`;
+  const plot = el.querySelector(".plot");
+  const draw = () => {
+    const W = Math.max(280, plot.clientWidth), H = W < 480 ? 240 : 290, m = { l: 46, r: 12, t: 12, b: 40 };
+    const e = o.edges, c = o.counts, x0 = -0.35, x1 = 1.05, ymax = Math.max(...c) * 1.08;
+    const sx = v => m.l + (v - x0) / (x1 - x0) * (W - m.l - m.r), sy = v => H - m.b - v / ymax * (H - m.t - m.b);
+    let s = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.title}">`;
+    for (const v of niceLin(0, ymax, 4)) s += `<line x1="${m.l}" x2="${W - m.r}" y1="${sy(v)}" y2="${sy(v)}" stroke="${css("--grid")}"/><text x="${m.l - 6}" y="${sy(v) + 4}" text-anchor="end">${fmt(v)}</text>`;
+    for (const t of [0.5, 1, 2, 3, 5, 10]) s += `<text x="${sx(Math.log10(t))}" y="${H - m.b + 16}" text-anchor="middle">${t}×</text>`;
+    c.forEach((v, i) => { const a = sx(e[i]) + 1, b = sx(e[i + 1]) - 1;
+      s += `<rect x="${a}" y="${sy(v)}" width="${Math.max(0.5, b - a)}" height="${H - m.b - sy(v)}" fill="${css("--s1")}"><title>${fmt(10 ** e[i], 2)}–${fmt(10 ** e[i + 1], 2)}×: ${v} samples</title></rect>`; });
+    s += `<line x1="${sx(0)}" x2="${sx(0)}" y1="${m.t}" y2="${H - m.b}" stroke="${css("--ink-2")}"/><text class="lab" x="${sx(0) - 6}" y="${m.t + 12}" text-anchor="end">parity</text>`;
+    s += `<line x1="${m.l}" x2="${W - m.r}" y1="${H - m.b}" y2="${H - m.b}" stroke="${css("--axis")}"/>`;
+    s += `<text class="lab" x="${(W + m.l) / 2}" y="${H - 6}" text-anchor="middle">orbit ÷ ground cost ratio (log scale)</text></svg>`;
+    plot.innerHTML = s;
+  };
+  draw(); charts.push(draw);
+}
+
+const charts = [];
+const T = D.thermal;
+lineChart($("ch-thermal"), { title: "Net heat rejected per m² of two-sided panel, 650 km", x: T.T, xname: "Radiator T", xfmtTip: v => fmt(v) + " K",
+  series: [{ name: "Ideal black body (ε = 0.88)", y: T.q_ideal, color: "--muted" }, { name: "Radial orientation", y: T.q_radial, color: "--s1" }, { name: "Along-track", y: T.q_along, color: "--s2" }],
+  yr: [0, 2300], xr: [260, 400], xlabel: "radiator mean temperature (K)", ylabel: "W/m²", yfmt: v => fmt(v) + " W/m²",
+  hlines: [[T.array_W_m2_EOL, "solar array electrical output, end of life (207 W/m²)"]], bands: [[305, 335, "practical for GPUs", "--s1"]], bandAxis: "x" });
+const HP = D.heat_pump, hk = Object.keys(HP).sort((a, b) => a - b), hpq = ["--q1", "--q2", "--q3", "--q4"];
+lineChart($("ch-hp"), { title: "Total mass vs heat-pump hot side (cold side 320 K)", x: HP[hk[0]].Th, xname: "Hot side", xfmtTip: v => fmt(v) + " K",
+  series: hk.map((k, i) => ({ name: `${k} kg/m² radiator`, y: HP[k].m, color: hpq[i], marks: [[HP[k].T_opt, HP[k].m_opt]] })),
+  yr: [20, 60], xlabel: "radiator (hot side) temperature, K", ylabel: "kg per kW", yfmt: v => fmt(v, 1) + " kg/kW" });
+const dk = Object.keys(D.dose);
+lineChart($("ch-dose"), { title: "Ionising dose behind aluminium", x: D.depth, xname: "Shielding", xfmtTip: v => fmt(v, 1) + " mm",
+  series: dk.map((k, i) => ({ name: `${k} km`, y: D.dose[k], color: ["--s1", "--s2", "--s3", "--s4"][i] })),
+  ylog: true, yr: [20, 20000], xr: [0.5, 20], xticks: [1, 5, 10, 15, 20], xlabel: "aluminium thickness (mm)", ylabel: "rad(Si) per year", yfmt: v => fmt(v) + " rad/yr",
+  hlines: [[400, "HBM onset spread over 5 years"]] });
+const G = D.goodput;
+lineChart($("ch-goodput"), { title: "Goodput of one synchronous job", x: G.N, xname: "GPUs", xfmtTip: v => fmt(v),
+  series: Object.keys(G.curves).map((k, i) => ({ name: `interrupts ×${k}`, y: G.curves[k], color: hpq[i] })),
+  xlog: true, yr: [0, 1], xlabel: "GPUs in the job", ylabel: "useful fraction of time", yfmt: v => fmt(100 * v) + "%" });
+const RL = D.ratio_vs_launch;
+lineChart($("ch-ratio"), { title: "Orbit ÷ ground cost vs launch price", x: RL.launch, xname: "Launch", xfmtTip: v => "$" + fmt(v) + "/kg", xfmt: v => "$" + tickFmt(v),
+  series: SCN.map(([k, n, c]) => ({ name: n, y: RL[k], color: c })), xlog: true, ylog: true, yr: [0.5, 10], yticks: [0.5, 1, 2, 3, 5, 10],
+  xlabel: "launch price to orbit ($/kg)", ylabel: "cost ratio", yfmt: v => fmt(v, 2) + "×",
+  hlines: [[1, "parity"]], vlines: [[3000, "Falcon 9"], [200, "Suncatcher target"], [50, "advocate"]] });
+const EL = D.elec_vs_launch;
+lineChart($("ch-elec"), { title: "Ground power price at which orbit breaks even", x: EL.launch, xname: "Launch", xfmtTip: v => "$" + fmt(v) + "/kg", xfmt: v => "$" + tickFmt(v),
+  series: SCN.slice(0, 3).map(([k, n, c]) => ({ name: n, y: EL[k], color: c })), xlog: true, ylog: true, yr: [0.05, 20], yticks: [0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20],
+  xlabel: "launch price ($/kg)", ylabel: "$ per kWh", yfmt: v => "$" + fmt(v, 2) + "/kWh", bands: [[0.05, 0.12, "today's industrial and PPA prices", "--s3"]] });
+histChart($("ch-mc"), { title: `Monte Carlo: median ${fmt(D.mc.percentiles.p50, 2)}×, 90% in ${fmt(D.mc.percentiles.p5, 2)}–${fmt(D.mc.percentiles.p95, 2)}×`, edges: D.mc.hist_edges, counts: D.mc.hist });
+const nice = { launch_usd_per_kg: "launch $/kg", sc_usd_per_kg: "satellite $/kg", rad_kg_per_m2: "radiator kg/m²", space_afr_multiplier: "space failure ×", hw_afr_ground: "ground failure rate", array_W_per_kg: "array W/kg", fac_capex_usd_per_kW: "facility capex", it_capex_usd_per_kW: "chip capex", T_rad: "radiator T", elec_usd_per_kWh: "electricity price", it_kg_per_kW: "IT mass", discount_rate: "discount rate", lifetime_yr: "lifetime" };
+barChart($("ch-sens"), { title: "What drives the ratio (rank correlation)", xr: [-0.3, 0.7], labelW: 130, xlabel: "Spearman ρ with cost ratio",
+  rows: Object.entries(D.mc.spearman).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).map(([k, v]) => ({ label: nice[k] || k, v })) });
+const IC = D.it_capex;
+lineChart($("ch-capex"), { title: "Orbit ÷ ground cost vs chip price", x: IC.it_capex, xname: "Chip capex", xfmtTip: v => "$" + fmt(v / 1000) + "k/kW", xfmt: v => "$" + fmt(v / 1000) + "k",
+  series: SCN.map(([k, n, c]) => ({ name: n, y: IC[k], color: c })), ylog: true, yr: [0.4, 20], yticks: [0.5, 1, 2, 5, 10, 20],
+  xlabel: "compute hardware, $ per kW of IT", ylabel: "cost ratio", yfmt: v => fmt(v, 2) + "×", hlines: [[1, "parity"]], bands: [[24000, 32000, "NVL72 today", "--s1"]], bandAxis: "x" });
+
+/* ---------- calculator ---------- */
+const CTRL = [
+  ["Launch and manufacturing"],
+  ["launch", "Launch price", 20, 5000, "log", v => "$" + fmt(v) + "/kg"],
+  ["sc", "Satellite hardware, excl. chips", 50, 5000, "log", v => "$" + fmt(v) + "/kg"],
+  ["Engineering"],
+  ["array_W_per_kg", "Solar array specific power", 50, 800, "log", v => fmt(v) + " W/kg"],
+  ["rad_kg_per_m2", "Radiator areal mass", 1, 20, "lin", v => fmt(v, 1) + " kg/m²"],
+  ["T_rad", "Radiator mean temperature", 290, 380, "lin", v => fmt(v) + " K"],
+  ["it_kg_per_kW", "Compute hardware mass", 2, 15, "lin", v => fmt(v, 1) + " kg/kW"],
+  ["Ground and money"],
+  ["it_capex", "Compute hardware price", 5000, 50000, "lin", v => "$" + fmt(v / 1000, 1) + "k/kW"],
+  ["elec", "Ground electricity price", 0.02, 1.0, "log", v => "$" + fmt(v, 3) + "/kWh"],
+  ["afr_mult", "Failure rate in orbit vs ground", 1, 5, "lin", v => "×" + fmt(v, 2)],
+  ["lifetime_yr", "Satellite and chip life", 3, 10, "lin", v => fmt(v, 1) + " yr"],
+];
+let P = M.params(M.presets.near_term);
+const toPos = (c, v) => c[4] === "log" ? Math.log(v / c[2]) / Math.log(c[3] / c[2]) * 1000 : (v - c[2]) / (c[3] - c[2]) * 1000;
+const fromPos = (c, p) => c[4] === "log" ? c[2] * Math.pow(c[3] / c[2], p / 1000) : c[2] + (c[3] - c[2]) * p / 1000;
+$("ctrls").innerHTML = CTRL.map(c => c.length === 1 ? `<div class="ctrl-group">${c[0]}</div>` :
+  `<div class="ctrl"><label for="in-${c[0]}">${c[1]}</label><output id="out-${c[0]}" for="in-${c[0]}"></output><input type="range" id="in-${c[0]}" min="0" max="1000" step="1"></div>`).join("");
+const sliders = CTRL.filter(c => c.length > 1);
+function syncInputs() { for (const c of sliders) { $("in-" + c[0]).value = Math.round(toPos(c, P[c[0]])); $("out-" + c[0]).textContent = c[5](P[c[0]]); } }
+const MASS = [["m_array", "Solar array", "--s1"], ["m_rad", "Radiator", "--s2"], ["m_it", "Compute", "--s3"], ["m_batt", "Battery", "--s4"], ["m_shield", "Shielding", "--s5"], ["m_struct", "Structure", "--s6"]];
+const COST = [["IT", "Compute hardware", "--s1"], ["facility", "Facility / satellite", "--s2"], ["energy", "Electricity", "--s3"], ["launch", "Launch", "--s4"], ["opex", "Operations", "--s5"], ["financing", "Financing during build", "--s6"]];
+$("masslegend").innerHTML = MASS.map(m => `<span><i class="sq" style="--c:var(${m[2]})"></i>${m[1]}</span>`).join("");
+$("costlegend").innerHTML = COST.map(m => `<span><i class="sq" style="--c:var(${m[2]})"></i>${m[1]}</span>`).join("");
+function stack(parts, keys, max) { return `<div class="bar">${keys.map(([k, l, c]) => { const v = parts[k] || 0; return v > 0 ? `<div style="--c:var(${c});width:${v / max * 100}%" title="${l}: ${k === "m_array" || k.startsWith("m_") ? fmt(v, 1) + " kg/kW" : usd(v)}"></div>` : ""; }).join("")}</div>`; }
+function update() {
+  const r = M.evaluate(P), bel = M.breakevenLaunch(P), bee = M.breakevenElec(P);
+  $("o-ratio").textContent = fmt(r.ratio, 2) + "×";
+  const st = r.ratio < 0.95 ? ["good", "Orbit cheaper"] : r.ratio <= 1.05 ? ["warn", "Roughly at parity"] : r.ratio < 2 ? ["serious", "Orbit more expensive"] : ["crit", "Orbit much more expensive"];
+  $("o-chip").innerHTML = `<span class="chip ${st[0]}">${st[1]}</span>`;
+  $("o-gpuhr").textContent = "$" + fmt(r.space * 1.8 / 8766, 2) + " vs $" + fmt(r.ground * 1.8 / 8766, 2);
+  $("o-mass").textContent = fmt(r.node.total, 1) + " kg/kW";
+  $("o-bel").textContent = bel == null ? "none, even at $0" : "$" + fmt(bel) + "/kg";
+  $("o-bee").textContent = bee == null ? "–" : bee < 0 ? "orbit wins at $0/kWh" : "$" + fmt(bee, 2) + "/kWh";
+  $("o-area").textContent = fmt(r.node.A_array, 1) + " + " + fmt(r.node.A_rad, 1) + " m²";
+  $("o-gw").textContent = fmt(r.node.total * 1000) + " t · " + fmt(r.node.total * 10) + " launches";
+  $("massbar").innerHTML = `<div class="barrow"><span>Orbit</span><div style="display:flex;align-items:center">${stack(r.node, MASS, Math.max(60, r.node.total))}<span class="bartot">${fmt(r.node.total, 1)}</span></div></div>`;
+  const sp = { ...r.sp, facility: r.sp.spacecraft }, mx = Math.max(r.space, r.ground) * 1.02;
+  $("costbars").innerHTML = [["Ground", r.gp, r.ground], ["Orbit", sp, r.space]].map(([l, p, t]) =>
+    `<div class="barrow"><span>${l}</span><div style="display:flex;align-items:center;min-width:0"><div style="flex:0 0 ${t / mx * 82}%">${stack(p, COST, t)}</div><span class="bartot">${usd(t)}</span></div></div>`).join("");
+}
+for (const c of sliders) $("in-" + c[0]).addEventListener("input", e => {
+  P[c[0]] = fromPos(c, +e.target.value); $("out-" + c[0]).textContent = c[5](P[c[0]]);
+  document.querySelectorAll(".presets button").forEach(b => b.setAttribute("aria-pressed", "false")); update(); });
+document.querySelectorAll(".presets button").forEach(b => b.addEventListener("click", () => {
+  P = M.params(M.presets[b.dataset.preset]);
+  document.querySelectorAll(".presets button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  syncInputs(); update(); }));
+syncInputs(); update();
+
+/* ---------- redraw on resize / theme ---------- */
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => charts.forEach(f => f()), 120); });
+const redraw = () => { charts.forEach(f => f()); paintEarth(); };
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", redraw);
+new MutationObserver(redraw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* ---------- hero: dawn-dusk orbit ---------- */
+const cv = $("orbit"), ctx = cv.getContext("2d");
+let earthImg = null, W0 = 0, H0 = 0, dpr = 1;
+const yaw = -0.62, pitch = 0.32; // camera
+const rot = ([x, y, z]) => { // world -> camera (orthographic, camera looks along -z)
+  const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const x1 = cy * x + sy * z, z1 = -sy * x + cy * z; return [x1, cp * y - sp * z1, sp * y + cp * z1]; };
+const unrot = ([x, y, z]) => { const cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const y1 = cp * y + sp * z, z1 = -sp * y + cp * z; return [cy * x - sy * z1, y1, sy * x + cy * z1]; };
+const SUNV = [-1, 0, 0]; // sun along -x world; orbit plane = y-z (normal along x)
+function paintEarth() {
+  const r = cv.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
+  W0 = Math.max(200, r.width); H0 = Math.max(160, r.height); cv.width = W0 * dpr; cv.height = H0 * dpr;
+  const R = Math.min(W0, H0) * 0.27, N = Math.ceil(2 * R * dpr), off = document.createElement("canvas"); off.width = off.height = N;
+  const o = off.getContext("2d"), img = o.createImageData(N, N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const u = (i + 0.5) / N * 2 - 1, v = -((j + 0.5) / N * 2 - 1), rr = u * u + v * v; if (rr > 1) continue;
+    const nw = unrot([u, v, Math.sqrt(1 - rr)]), mu = -(nw[0] * SUNV[0] + nw[1] * SUNV[1] + nw[2] * SUNV[2]);
+    const lit = Math.max(0, Math.min(1, (-mu + 0.06) / 0.14)), rim = Math.pow(rr, 6) * 0.5;
+    const k = (j * N + i) * 4;
+    const day = [63 + 40 * rim, 127 + 40 * rim, 208], night = [12, 22, 38];
+    for (let c = 0; c < 3; c++) img.data[k + c] = night[c] + (day[c] - night[c]) * lit * (0.75 + 0.25 * Math.max(0, -mu));
+    img.data[k + 3] = 255;
+  }
+  o.putImageData(img, 0, 0); earthImg = off; frame(performance.now());
+}
+function frame(t) {
+  if (!earthImg) return;
+  const w = W0, h = H0, cx = w * 0.5, cy = h * 0.47, R = Math.min(w, h) * 0.27, Ro = R * 1.32;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  const sp = rot(SUNV.map(v => -v * -1)); // sun direction in camera space
+  const sunDir = rot([-1, 0, 0]);
+  const gx = cx + sunDir[0] * w * 0.62, gy = cy - sunDir[1] * h * 0.62;
+  const g = ctx.createRadialGradient(gx, gy, 0, gx, gy, w * 0.55); g.addColorStop(0, "rgba(255,214,140,0.55)"); g.addColorStop(1, "rgba(255,214,140,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  const ang = reduce ? 1.1 : t / 4200;
+  const pts = []; for (let k = 0; k <= 160; k++) { const a = k / 160 * Math.PI * 2; pts.push(rot([0, Math.cos(a) * Ro / R, Math.sin(a) * Ro / R])); }
+  const drawOrbit = front => { ctx.beginPath(); let on = false;
+    for (const p of pts) { const vis = front ? p[2] >= 0 || p[0] * p[0] + p[1] * p[1] > 1 : p[2] < 0; const X = cx + p[0] * R, Y = cy - p[1] * R;
+      if (vis) { on ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); on = true; } else on = false; }
+    ctx.strokeStyle = front ? "rgba(255,200,110,0.9)" : "rgba(255,200,110,0.25)"; ctx.lineWidth = 1.5; ctx.setLineDash(front ? [] : [3, 4]); ctx.stroke(); ctx.setLineDash([]); };
+  drawOrbit(false);
+  ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip(); ctx.drawImage(earthImg, cx - R, cy - R, 2 * R, 2 * R); ctx.restore();
+  ctx.beginPath(); ctx.arc(cx, cy, R + 1.5, 0, Math.PI * 2); ctx.strokeStyle = "rgba(140,190,255,0.35)"; ctx.lineWidth = 2; ctx.stroke();
+  drawOrbit(true);
+  const s = rot([0, Math.cos(ang) * Ro / R, Math.sin(ang) * Ro / R]), hidden = s[2] < 0 && s[0] * s[0] + s[1] * s[1] < 1;
+  if (!hidden) {
+    const X = cx + s[0] * R, Y = cy - s[1] * R, pn = rot([0, -Math.sin(ang), Math.cos(ang)]);
+    ctx.strokeStyle = "#ffd27a"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X - pn[0] * 11, Y + pn[1] * 11); ctx.lineTo(X + pn[0] * 11, Y - pn[1] * 11); ctx.stroke();
+    ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(X, Y, 3.2, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.font = "600 11px 'JetBrains Mono', monospace"; ctx.fillStyle = "rgba(255,220,160,0.9)"; ctx.fillText("SUN", Math.min(w - 40, Math.max(8, gx + 8)), Math.max(16, Math.min(h - 40, gy)));
+  if (!reduce) requestAnimationFrame(frame);
+}
+paintEarth(); addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => { charts.forEach(f => f()); paintEarth(); }, 120); });
+})();
+</script>
